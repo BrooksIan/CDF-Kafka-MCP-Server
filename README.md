@@ -519,16 +519,16 @@ If MCP server is not working:
 **Choose Cloud Provider:**
 ```bash
 # AWS MSK
-./run_cloud_tests.sh aws-msk
+./Testing/run_cloud_tests.sh aws-msk
 
 # Confluent Cloud
-./run_cloud_tests.sh confluent-cloud
+./Testing/run_cloud_tests.sh confluent-cloud
 
 # Azure Event Hubs
-./run_cloud_tests.sh azure-eventhub
+./Testing/run_cloud_tests.sh azure-eventhub
 
 # Generic SASL_SSL
-./run_cloud_tests.sh generic
+./Testing/run_cloud_tests.sh generic
 ```
 
 **Set Environment Variables:**
@@ -548,10 +548,10 @@ export KNOX_TOKEN="your-bearer-token-here"
 **Run Tests:**
 ```bash
 # Run comprehensive cloud tests
-./run_cloud_tests.sh aws-msk --debug
+./Testing/run_cloud_tests.sh aws-msk --debug
 
 # Or run individual test script
-uv run python3 test_cloud_connection.py
+uv run python3 Testing/test_cloud_connection.py
 ```
 
 ### Cloud Configuration Files
@@ -581,7 +581,7 @@ uv run python3 test_cloud_connection.py
 │       └── mcp_server.py        # MCP server implementation
 ├── config/                      # Configuration files
 ├── examples/                    # Usage examples
-├── tests/                       # Test files
+├── Testing/                     # Test files
 ├── pyproject.toml              # Project configuration
 └── README.md                   # Documentation
 ```
@@ -599,11 +599,11 @@ python -m build
 python -m pytest
 
 # Format code
-black src/ tests/
-isort src/ tests/
+black src/ Testing/
+isort src/ Testing/
 
 # Lint code
-flake8 src/ tests/
+flake8 src/ Testing/
 mypy src/
 ```
 

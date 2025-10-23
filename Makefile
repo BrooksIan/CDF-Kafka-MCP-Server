@@ -39,12 +39,12 @@ clean:
 # Run tests
 test:
 	@echo "Running tests..."
-	python -m pytest tests/ -v
+	python -m pytest Testing/ -v
 
 # Run tests with coverage
 test-cov:
 	@echo "Running tests with coverage..."
-	python -m pytest tests/ -v --cov=cdf_kafka_mcp_server --cov-report=html --cov-report=term-missing
+	python -m pytest Testing/ -v --cov=cdf_kafka_mcp_server --cov-report=html --cov-report=term-missing
 
 # Run the server
 run:
@@ -64,13 +64,13 @@ install: deps
 # Format code
 fmt:
 	@echo "Formatting code..."
-	black src/ tests/
-	isort src/ tests/
+	black src/ Testing/
+	isort src/ Testing/
 
 # Lint code
 lint:
 	@echo "Linting code..."
-	flake8 src/ tests/
+	flake8 src/ Testing/
 	mypy src/
 
 # Run all checks
