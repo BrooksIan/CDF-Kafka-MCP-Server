@@ -9,16 +9,17 @@ echo "====================================="
 
 # Function to display usage
 usage() {
-    echo "Usage: $0 [aws-msk|confluent-cloud|azure-eventhub|generic]"
+    echo "Usage: $0 [aws-msk|confluent-cloud|azure-eventhub|cdp-cloud|generic]"
     echo ""
     echo "Options:"
     echo "  aws-msk         Setup for AWS MSK (Managed Streaming for Kafka)"
     echo "  confluent-cloud Setup for Confluent Cloud"
     echo "  azure-eventhub  Setup for Azure Event Hubs for Kafka"
+    echo "  cdp-cloud       Setup for CDP Cloud (Cloudera Data Platform)"
     echo "  generic         Setup for generic cloud Kafka deployment"
     echo ""
     echo "Example:"
-    echo "  $0 aws-msk"
+    echo "  $0 cdp-cloud"
     exit 1
 }
 
@@ -70,6 +71,27 @@ case $PROVIDER in
         echo ""
         echo "2. Update the bootstrap servers in config/kafka_config.yaml"
         echo "3. Run: uv run python -m cdf_kafka_mcp_server"
+        ;;
+    
+    "cdp-cloud")
+        echo "📋 Setting up for CDP Cloud (Cloudera Data Platform)..."
+        cp config/kafka_config_cdp_cloud.yaml config/kafka_config.yaml
+        echo "✅ Configuration copied to config/kafka_config.yaml"
+        echo ""
+        echo "🔧 Next steps:"
+        echo "1. The Knox bearer token is already configured in the config file"
+        echo "2. Set your CDP Cloud credentials (if needed):"
+        echo "   export KAFKA_SASL_USERNAME=\"your-cdp-username\""
+        echo "   export KAFKA_SASL_PASSWORD=\"your-cdp-password\""
+        echo ""
+        echo "3. Optional: Copy environment template:"
+        echo "   cp config/env_cdp_cloud_template.txt .env"
+        echo "   # Edit .env with your actual values"
+        echo ""
+        echo "4. Run: uv run python -m cdf_kafka_mcp_server"
+        echo ""
+        echo "📝 Note: This configuration uses Knox Gateway authentication"
+        echo "   with the provided bearer token for secure access to CDP Cloud."
         ;;
     
     "generic")

@@ -527,6 +527,9 @@ If MCP server is not working:
 # Azure Event Hubs
 ./Testing/run_cloud_tests.sh azure-eventhub
 
+# CDP Cloud (Cloudera Data Platform)
+./Testing/run_cloud_tests.sh cdp-cloud
+
 # Generic SASL_SSL
 ./Testing/run_cloud_tests.sh generic
 ```
@@ -559,6 +562,7 @@ uv run python3 Testing/test_cloud_connection.py
 - `config/kafka_config_aws_msk.yaml` - AWS MSK configuration
 - `config/kafka_config_confluent_cloud.yaml` - Confluent Cloud configuration
 - `config/kafka_config_azure_eventhub.yaml` - Azure Event Hubs configuration
+- `config/kafka_config_cdp_cloud.yaml` - CDP Cloud (Cloudera Data Platform) configuration
 - `config/kafka_config_cloud.yaml` - Generic cloud configuration
 
 ### Documentation

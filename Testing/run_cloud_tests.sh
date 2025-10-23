@@ -15,6 +15,7 @@ usage() {
     echo "  aws-msk          AWS Managed Streaming for Kafka"
     echo "  confluent-cloud  Confluent Cloud"
     echo "  azure-eventhub   Azure Event Hubs for Kafka"
+    echo "  cdp-cloud        CDP Cloud (Cloudera Data Platform)"
     echo "  generic          Generic SASL_SSL Kafka"
     echo ""
     echo "Options:"
@@ -34,7 +35,7 @@ DEBUG_MODE=""
 
 while [[ $# -gt 0 ]]; do
     case $1 in
-        aws-msk|confluent-cloud|azure-eventhub|generic)
+        aws-msk|confluent-cloud|azure-eventhub|cdp-cloud|generic)
             CLOUD_PROVIDER="$1"
             shift
             ;;
@@ -103,6 +104,23 @@ case "$CLOUD_PROVIDER" in
         echo "  export KAFKA_SASL_MECHANISM=\"PLAIN\""
         echo "  export KAFKA_SASL_USERNAME=\"\$ConnectionString\""
         echo "  export KAFKA_SASL_PASSWORD=\"your-eventhub-connection-string\""
+        echo ""
+        echo "Press Enter when ready to continue..."
+        read
+        ;;
+    "cdp-cloud")
+        echo "📋 Setting up CDP Cloud environment..."
+        echo "The Knox bearer token is already configured in the config file."
+        echo "Please set the following environment variables (if needed):"
+        echo "  export KAFKA_BOOTSTRAP_SERVERS=\"irb-kakfa-only-master0.cgsi-dem.prep-j1tk.a3.cloudera.site:443\""
+        echo "  export KAFKA_SECURITY_PROTOCOL=\"SASL_SSL\""
+        echo "  export KAFKA_SASL_MECHANISM=\"PLAIN\""
+        echo "  export KAFKA_SASL_USERNAME=\"your-cdp-username\""
+        echo "  export KAFKA_SASL_PASSWORD=\"your-cdp-password\""
+        echo "  export KNOX_GATEWAY=\"https://irb-kakfa-only-master0.cgsi-dem.prep-j1tk.a3.cloudera.site:443/irb-kakfa-only/cdp-proxy-token\""
+        echo "  export KNOX_TOKEN=\"your-bearer-token\""
+        echo "  export KNOX_SERVICE=\"kafka\""
+        echo "  export KNOX_VERIFY_SSL=\"true\""
         echo ""
         echo "Press Enter when ready to continue..."
         read

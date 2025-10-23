@@ -1,39 +1,39 @@
-# CDF Kafka MCP Server Configuration
-# This file contains the default configuration for the Kafka MCP Server
+# CDF Kafka MCP Server Configuration for CDP Cloud
+# This file contains the configuration for CDP Cloud with Knox Gateway authentication
 
 kafka:
-  # Kafka cluster configuration
-  bootstrap_servers: "localhost:9092"
+  # CDP Cloud Kafka cluster configuration
+  bootstrap_servers: "irb-kakfa-only-master0.cgsi-dem.prep-j1tk.a3.cloudera.site:443"
   client_id: "cdf-kafka-mcp-server"
-  security_protocol: "PLAINTEXT"  # PLAINTEXT, SASL_PLAINTEXT, SASL_SSL, SSL
+  security_protocol: "SASL_SSL"  # CDP Cloud uses SASL_SSL
   timeout: 30
 
-  # SASL configuration (if using SASL)
-  sasl_mechanism: "PLAIN"  # PLAIN, SCRAM-SHA-256, SCRAM-SHA-512
-  sasl_username: ""
-  sasl_password: ""
+  # SASL configuration for CDP Cloud
+  sasl_mechanism: "PLAIN"  # CDP Cloud typically uses PLAIN
+  sasl_username: ""  # Will be set via environment variable
+  sasl_password: ""  # Will be set via environment variable
 
-  # TLS configuration (if using TLS)
-  tls_enabled: false
-  tls_ca_cert: ""
+  # TLS configuration for CDP Cloud
+  tls_enabled: true
+  tls_ca_cert: ""  # CDP Cloud provides its own certificates
   tls_cert: ""
   tls_key: ""
 
-# Apache Knox Gateway configuration
+# Apache Knox Gateway configuration for CDP Cloud
 knox:
-  # Knox Gateway URL (e.g., https://knox-gateway.example.com:8443)
-  gateway: "https://localhost:8444"
+  # CDP Cloud Knox Gateway URL
+  gateway: "https://irb-kakfa-only-master0.cgsi-dem.prep-j1tk.a3.cloudera.site:443/irb-kakfa-only/cdp-proxy-token"
   
-  # Authentication method - bearer token (recommended) or username/password
-  token: "your-bearer-token-here"  # Bearer token for Knox authentication (recommended)
-  username: ""  # Username for Knox authentication (alternative to token)
-  password: ""  # Password for Knox authentication (alternative to token)
+  # Bearer token for CDP Cloud Knox authentication
+  token: "eyJqa3UiOiJodHRwczovL2lyYi1rYWtmYS1vbmx5LW1hc3RlcjAuY2dzaS1kZW0ucHJlcC1qMXRrLmEzLmNsb3VkZXJhLnNpdGUvaXJiLWtha2ZhLW9ubHkvaG9tZXBhZ2Uva25veHRva2VuL2FwaS92Mi9qd2tzLmpzb24iLCJraWQiOiJYa1JVQTczLUtwNGs2MVVKSGsxZUJDRGhOeVhwRDdEbUVaQUJ1dnM2cjlRIiwidHlwIjoiSldUIiwiYWxnIjoiUlMyNTYifQ.eyJzdWIiOiJpYnJvb2tzIiwiYXVkIjoiY2RwLXByb3h5LXRva2VuIiwiamt1IjoiaHR0cHM6Ly9pcmIta2FrZmEtb25seS1tYXN0ZXIwLmNnc2ktZGVtLnByZXAtajF0ay5hMy5jbG91ZGVyYS5zaXRlL2lyYi1rYWtmYS1vbmx5L2hvbWVwYWdlL2tub3h0b2tlbi9hcGkvdjIvandrcy5qc29uIiwia2lkIjoiWGtSVUE3My1LcDRrNjFVSkhrMWVCQ0RoTnlYcEQ3RG1FWkFCdXZzNnI5USIsImlzcyI6IktOT1hTU08iLCJleHAiOjE3NjEyNzQ5NzEsIm1hbmFnZWQudG9rZW4iOiJ0cnVlIiwia25veC5pZCI6ImQ4ZjAyNGFlLWEzYWUtNDdiOC05NWU3LTBmYWMxMDZkNzIwNCJ9.pUm-d052Dw9Xt-uBxTJPfVahKFwVBmU9Sr3aWEqCiKfmvG74fWFCEsiG_3dIycLpF70Qw79TtsOckU130PUhhLFHYhEX4WpViy3mWFHKEJQD10uZKCU7GpODOJ05FViW5U_d01nxLIg0FIPZpcQsaGpAwae68rZdSTz7DLbXVFFiDWcOWTunkGDoBw9scRQ0GGo-A_Ktv0s6rX71jtKCeEiHq1bnmHhPqyjw3VBj-j4UyODZZvcjfE50-YZgs35qz6xpLcqu2CH-_o8ocOf5vAu-lC-X78hOx_WM3ayZSOaj1gL0uG4cRKlMA7508zZOQcV10PLucmAkg5d__rYM0g"
+  username: ""  # Not needed when using bearer token
+  password: ""  # Not needed when using bearer token
   
-  # SSL verification settings
-  verify_ssl: false  # Disable for local testing
-  ca_bundle: ""  # Path to CA bundle file for SSL verification
+  # SSL verification settings for CDP Cloud
+  verify_ssl: true  # Enable for production CDP Cloud
+  ca_bundle: ""  # CDP Cloud provides its own certificates
   
-  # Knox service name for Kafka
+  # Knox service name for Kafka in CDP Cloud
   service: "kafka"
 
 # Logging configuration
