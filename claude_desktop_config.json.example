@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "cdf-kafka-mcp-server": {
+      "command": "cdf-kafka-mcp-server",
+      "args": [
+        "--config", "./config/kafka_config.yaml"
+      ],
+      "env": {
+        "KNOX_GATEWAY": "https://knox-gateway.example.com:8443",
+        "KNOX_TOKEN": "your-knox-token-here",
+        "KNOX_VERIFY_SSL": "true"
+      }
+    }
+  }
+}

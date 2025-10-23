@@ -1,0 +1,219 @@
+services:
+  # Zookeeper for Kafka
+  zookeeper:
+    image: docker.repository.cloudera.com/cloudera/csp-ce/zookeeper:2.0.0.0
+    hostname: zookeeper
+    container_name: zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - csp-ce-net
+    volumes:
+      - zookeeper-data:/data/zookeeper
+    user: "0:0"  # Run as root to avoid permission issues
+    healthcheck:
+      test: ["CMD", "bash", "-c", "ps aux | grep -v grep | grep -q QuorumPeerMain"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: on-failure
+  postgresql:
+    image: docker.repository.cloudera.com/cloudera/csp-ce/postgresql:2.0.0.0
+    ports:
+      - "5432:5432"
+    networks:
+      - csp-ce-net
+    volumes:
+      - pg-volume:/var/lib/postgresql
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-d", "db_prod" ]
+      interval: 30s
+      timeout: 60s
+      retries: 5
+  prometheus:
+    image: docker.repository.cloudera.com/cloudera/csp-ce/prometheus:2.0.0.0
+    ports:
+      - "9090:9090"
+    networks:
+      - csp-ce-net
+    volumes:
+      - prom-volume:/persistent
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "prometheus:9090/api/v1/targets?state=active" ]
+      interval: 5s
+      timeout: 10s
+      retries: 30
+    restart: on-failure
+    depends_on:
+      kafka-connect:
+        condition: service_healthy
+
+  smm:
+    image: docker.repository.cloudera.com/cloudera/csp-ce/smm:2.0.0.0
+    ports:
+      - "8585:8585"
+      - "9991:9991"
+    environment:
+      SMM_PROMETHEUS_USER: admin
+      SMM_PROMETHEUS_PASSWORD: admin123
+      SMM_DB_HOST: postgresql
+      SMM_DB_PORT: 5432
+      SMM_DB_NAME: db_prod
+      SMM_DB_USER: postgres
+      SMM_DB_PASSWORD: postgres
+    networks:
+      - csp-ce-net
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8585/api/v2/admin/metrics/aggregated/topics?duration=LAST_THIRTY_MINUTES&state=all" ]
+      interval: 5s
+      timeout: 10s
+      retries: 30
+    restart: on-failure
+    depends_on:
+      postgresql:
+        condition: service_started
+      prometheus:
+        condition: service_healthy
+      schema-registry:
+        condition: service_healthy
+      kafka-connect:
+        condition: service_healthy
+
+  schema-registry:
+    image: docker.repository.cloudera.com/cloudera/csp-ce/schema-registry:2.0.0.0
+    ports:
+      - "7788:7788"
+    networks:
+      - csp-ce-net
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "schema-registry:7788/api/v1/schemaregistry/schemas" ]
+      interval: 5s
+      timeout: 10s
+      retries: 50
+    restart: on-failure
+    volumes:
+      - sr-volume:/tmp/registry/local-jars
+    depends_on:
+      postgresql:
+        condition: service_started
+      kafka-connect:
+        condition: service_healthy
+  kafka:
+    image: docker.repository.cloudera.com/cloudera/csp-ce/kafka:2.0.0.0
+    hostname: kafka
+    container_name: kafka
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+      - "9094:9094"
+      - "24042:24042"
+      - "9100:9100"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_JMX_PORT: 9100
+      KAFKA_JMX_HOSTNAME: localhost
+      KAFKA_LOG_DIRS: /data/kafka-logs
+    networks:
+      - csp-ce-net
+    volumes:
+      - kafka-data:/data
+    user: "0:0"  # Run as root to avoid permission issues
+    healthcheck:
+      test: ["CMD", "bash", "-c", "ps aux | grep -v grep | grep -q Kafka"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: on-failure
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+
+  kafka-connect:
+    image: docker.repository.cloudera.com/cloudera/csp-ce/kafka-connect:2.0.0.0
+    hostname: kafka-connect
+    container_name: kafka-connect
+    ports:
+      - "28083:28083"
+      - "28086:28086"
+    environment:
+      CONNECT_BOOTSTRAP_SERVERS: 'kafka:29092'
+      CONNECT_REST_ADVERTISED_HOST_NAME: kafka-connect
+      CONNECT_REST_PORT: 28083
+      CONNECT_GROUP_ID: compose-connect-group
+      CONNECT_CONFIG_STORAGE_TOPIC: docker-connect-configs
+      CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR: 1
+      CONNECT_OFFSET_FLUSH_INTERVAL_MS: 10000
+      CONNECT_OFFSET_STORAGE_TOPIC: docker-connect-offsets
+      CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR: 1
+      CONNECT_STATUS_STORAGE_TOPIC: docker-connect-status
+      CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: 1
+      CONNECT_KEY_CONVERTER: org.apache.kafka.connect.storage.StringConverter
+      CONNECT_VALUE_CONVERTER: org.apache.kafka.connect.storage.StringConverter
+    networks:
+      - csp-ce-net
+    volumes:
+      - kafka-connect-data:/data
+    user: "0:0"  # Run as root to avoid permission issues
+    restart: on-failure
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:28083/connectors"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    depends_on:
+      kafka:
+        condition: service_healthy
+
+  # Knox Gateway (optional - for testing Knox authentication)
+  knox-gateway:
+    image: farberg/apache-knox-docker:1.6.1
+    container_name: knox-gateway
+    depends_on:
+      - kafka
+    ports:
+      - "8444:8443"  # Knox Gateway HTTPS (mapped to avoid conflict with NiFi on 8443)
+      - "8082:8080"  # Knox Gateway HTTP (mapped to avoid conflict with Flink on 8081)
+    volumes:
+      - knox-data:/opt/knox/data
+    environment:
+      - KNOX_GATEWAY_HOME=/opt/knox
+      - KNOX_GATEWAY_CONF_DIR=/opt/knox/conf
+      - KNOX_GATEWAY_DATA_DIR=/opt/knox/data
+      - KNOX_GATEWAY_LOG_DIR=/opt/knox/logs
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/gateway/admin/v1/version"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    networks:
+      - csp-ce-net
+
+volumes:
+  zookeeper-data:
+  zookeeper-logs:
+  kafka-data:
+  kafka-connect-data:
+  knox-data:
+  sr-volume:
+  postgres-data:
+  pg-volume:
+  prom-volume:
+
+networks:
+  csp-ce-net:
+    driver: bridge

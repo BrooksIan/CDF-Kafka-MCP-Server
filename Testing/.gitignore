@@ -1,0 +1,28 @@
+# Testing Directory Gitignore
+# Ignore test artifacts and temporary files
+
+# Test results
+test_results.json
+*.log
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Virtual environments
+venv/
+env/
+.venv/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db

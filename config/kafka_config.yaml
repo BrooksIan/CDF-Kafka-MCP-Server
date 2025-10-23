@@ -1,0 +1,40 @@
+# CDF Kafka MCP Server Configuration
+# This file contains the default configuration for the Kafka MCP Server
+
+kafka:
+  # Kafka cluster configuration
+  bootstrap_servers: "localhost:9092"
+  client_id: "cdf-kafka-mcp-server"
+  security_protocol: "PLAINTEXT"  # PLAINTEXT, SASL_PLAINTEXT, SASL_SSL, SSL
+  timeout: 30
+
+  # SASL configuration (if using SASL)
+  sasl_mechanism: "PLAIN"  # PLAIN, SCRAM-SHA-256, SCRAM-SHA-512
+  sasl_username: ""
+  sasl_password: ""
+
+  # TLS configuration (if using TLS)
+  tls_enabled: false
+  tls_ca_cert: ""
+  tls_cert: ""
+  tls_key: ""
+
+# Apache Knox Gateway configuration
+knox:
+  # Knox Gateway URL (e.g., https://knox-gateway.example.com:8443)
+  gateway: "https://localhost:8444"
+  
+  # Authentication method - bearer token (recommended) or username/password
+  token: "your-bearer-token-here"  # Bearer token for Knox authentication (recommended)
+  username: ""  # Username for Knox authentication (alternative to token)
+  password: ""  # Password for Knox authentication (alternative to token)
+  
+  # SSL verification settings
+  verify_ssl: false  # Disable for local testing
+  ca_bundle: ""  # Path to CA bundle file for SSL verification
+  
+  # Knox service name for Kafka
+  service: "kafka"
+
+# Logging configuration
+log_level: "INFO"  # DEBUG, INFO, WARNING, ERROR, CRITICAL

@@ -1,0 +1,88 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+cdf-kafka-mcp-server
+cdf-kafka-mcp-server-*
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+
+# Dependency directories (remove the comment below to include it)
+# vendor/
+
+# Go workspace file
+go.work
+
+# Build directory
+build/
+dist/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Configuration files with sensitive data
+config/*.yaml
+config/*.json
+!config/kafka_config.yaml
+!config/*.example.*
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Temporary files
+tmp/
+temp/
+
+# Docker volumes
+docker-data/
+
+# Test coverage
+coverage.out
+coverage.html
+
+# Air (live reload) files
+.air.toml
+tmp/
+
+# Go mod download cache
+go.sum.bak
+
+# Certificates and keys
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+
+# Knox configuration (may contain sensitive data)
+knox-config/
+!knox-config/*.example.*
+
+# Claude Desktop config with sensitive data
+claude_desktop_config.json
+!claude_desktop_config.json.example

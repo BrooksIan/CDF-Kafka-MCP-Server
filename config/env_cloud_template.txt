@@ -1,0 +1,88 @@
+# Environment Variables Template for Cloud Kafka Deployments
+# Copy this file to .env and fill in your actual values
+
+# =============================================================================
+# KAFKA CONFIGURATION
+# =============================================================================
+
+# Kafka bootstrap servers (comma-separated)
+KAFKA_BOOTSTRAP_SERVERS=your-kafka-cluster-1.abc123.c2.kafka.us-east-1.amazonaws.com:9092,your-kafka-cluster-2.abc123.c2.kafka.us-east-1.amazonaws.com:9092
+
+# Security protocol (PLAINTEXT, SASL_PLAINTEXT, SASL_SSL, SSL)
+KAFKA_SECURITY_PROTOCOL=SASL_SSL
+
+# SASL mechanism (PLAIN, SCRAM-SHA-256, SCRAM-SHA-512, AWS_MSK_IAM)
+KAFKA_SASL_MECHANISM=PLAIN
+
+# SASL credentials
+KAFKA_SASL_USERNAME=your-kafka-username
+KAFKA_SASL_PASSWORD=your-kafka-password
+
+# Client configuration
+KAFKA_CLIENT_ID=cdf-kafka-mcp-server-cloud
+KAFKA_TIMEOUT=30
+
+# =============================================================================
+# AWS MSK SPECIFIC
+# =============================================================================
+
+# AWS credentials (use IAM roles in production)
+AWS_ACCESS_KEY_ID=your-aws-access-key
+AWS_SECRET_ACCESS_KEY=your-aws-secret-key
+AWS_REGION=us-east-1
+
+# =============================================================================
+# CONFLUENT CLOUD SPECIFIC
+# =============================================================================
+
+# Confluent Cloud API credentials
+CONFLUENT_API_KEY=your-confluent-api-key
+CONFLUENT_API_SECRET=your-confluent-api-secret
+
+# =============================================================================
+# AZURE EVENT HUBS SPECIFIC
+# =============================================================================
+
+# Azure Event Hubs connection string
+AZURE_EVENTHUB_CONNECTION_STRING=Endpoint=sb://your-namespace.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=your-key
+
+# =============================================================================
+# KNOX GATEWAY CONFIGURATION
+# =============================================================================
+
+# Knox Gateway settings (if using enterprise authentication)
+KNOX_ENABLED=false
+KNOX_GATEWAY_URL=https://your-knox-gateway.company.com:8443/gateway
+KNOX_TOKEN=your-knox-oauth2-token
+KNOX_VERIFY_SSL=true
+KNOX_SERVICE=kafka
+
+# =============================================================================
+# LOGGING CONFIGURATION
+# =============================================================================
+
+# Log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+LOG_LEVEL=INFO
+
+# Log file path
+LOG_FILE=/var/log/cdf-kafka-mcp-server.log
+
+# =============================================================================
+# MCP SERVER CONFIGURATION
+# =============================================================================
+
+# MCP server settings
+MCP_SERVER_NAME=cdf-kafka-mcp-server-cloud
+MCP_SERVER_VERSION=1.0.0
+MCP_SERVER_DESCRIPTION=CDF Kafka MCP Server for Cloud Deployment
+
+# =============================================================================
+# SSL/TLS CONFIGURATION
+# =============================================================================
+
+# SSL settings
+TLS_ENABLED=true
+TLS_CA_CERT=/path/to/cloud-ca-cert.pem
+TLS_CERT=/path/to/client-cert.pem
+TLS_KEY=/path/to/client-key.pem
+TLS_VERIFY_HOSTNAME=true

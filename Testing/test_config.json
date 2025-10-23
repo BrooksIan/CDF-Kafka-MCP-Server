@@ -1,0 +1,65 @@
+# Testing Configuration for CDF Kafka MCP Server
+# Configuration for the comprehensive testing suite
+
+{
+  "docker": {
+    "compose_file": "../docker-compose.yml",
+    "services": ["kafka", "zookeeper", "smm", "kafka-connect", "schema-registry"],
+    "timeout": 300,
+    "health_check_interval": 10,
+    "max_retries": 30
+  },
+  "mcp": {
+    "tools_to_test": [
+      "list_topics", "create_topic", "delete_topic", "describe_topic",
+      "produce_message", "consume_messages", "get_topic_info",
+      "get_knox_token", "refresh_knox_token", "validate_knox_token",
+      "list_connectors", "create_connector", "get_connector", 
+      "get_connector_status", "get_connector_config", "update_connector_config",
+      "delete_connector", "pause_connector", "resume_connector", 
+      "restart_connector", "get_connector_tasks", "get_connector_active_topics",
+      "list_connector_plugins", "validate_connector_config", "get_connect_server_info"
+    ],
+    "test_topic": "mcp-comprehensive-test",
+    "timeout": 30
+  },
+  "health_checks": {
+    "kafka": {
+      "command": "docker exec kafka ps aux | grep -v grep | grep -q Kafka",
+      "timeout": 10
+    },
+    "zookeeper": {
+      "command": "docker exec zookeeper ps aux | grep -v grep | grep -q QuorumPeerMain",
+      "timeout": 10
+    },
+    "kafka-connect": {
+      "url": "http://localhost:28083",
+      "expected_status": 200,
+      "timeout": 10
+    },
+    "schema-registry": {
+      "url": "http://localhost:7788/api/v1/schemaregistry/schemas",
+      "expected_status": 200,
+      "timeout": 10
+    },
+    "smm": {
+      "url": "http://localhost:9991",
+      "expected_status": 200,
+      "timeout": 10
+    }
+  },
+  "test_suites": {
+    "mcp_tools": {
+      "enabled": true,
+      "timeout": 60
+    },
+    "docker_deployment": {
+      "enabled": true,
+      "timeout": 120
+    },
+    "knox_integration": {
+      "enabled": true,
+      "timeout": 60
+    }
+  }
+}

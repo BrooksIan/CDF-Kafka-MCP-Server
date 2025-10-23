@@ -1,0 +1,7 @@
+# Testing Dependencies for CDF Kafka MCP Server
+# Install these packages for running the test suite
+
+requests>=2.25.0
+pytest>=6.0.0
+pytest-asyncio>=0.18.0
+pytest-cov>=2.12.0
