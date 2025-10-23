@@ -1,0 +1,341 @@
+{
+  "summary": {
+    "total_tests": 26,
+    "successful_tests": 26,
+    "failed_tests": 0,
+    "success_rate": 100.0,
+    "total_duration": 200.87250399589539,
+    "timestamp": 1761261617.5368
+  },
+  "results": {
+    "test_connection": {
+      "success": true,
+      "tool": "test_connection",
+      "arguments": {},
+      "result": {
+        "connected": true,
+        "message": "Successfully connected to Kafka"
+      },
+      "duration": 0.1593329906463623,
+      "timestamp": 1761261417.10305
+    },
+    "get_broker_info": {
+      "success": true,
+      "tool": "get_broker_info",
+      "arguments": {},
+      "result": {
+        "brokers": [
+          "irb-kakfa-only-master0.cgsi-dem.prep-j1tk.a3.cloudera.site:443"
+        ],
+        "client_id": "cdf-kafka-mcp-server",
+        "security_protocol": "SASL_SSL",
+        "knox_enabled": true
+      },
+      "duration": 0.00016307830810546875,
+      "timestamp": 1761261417.103393
+    },
+    "get_cluster_metadata": {
+      "success": true,
+      "tool": "get_cluster_metadata",
+      "arguments": {},
+      "result": {
+        "brokers": [
+          "irb-kakfa-only-master0.cgsi-dem.prep-j1tk.a3.cloudera.site:443"
+        ],
+        "client_id": "cdf-kafka-mcp-server",
+        "security_protocol": "SASL_SSL",
+        "knox_enabled": true,
+        "version": "1.0.0"
+      },
+      "duration": 4.1961669921875e-05,
+      "timestamp": 1761261417.103474
+    },
+    "test_knox_connection": {
+      "success": true,
+      "tool": "test_knox_connection",
+      "arguments": {},
+      "result": {
+        "connected": true,
+        "message": "Successfully connected to Knox Gateway"
+      },
+      "duration": 7.700920104980469e-05,
+      "timestamp": 1761261417.103576
+    },
+    "get_knox_metadata": {
+      "success": true,
+      "tool": "get_knox_metadata",
+      "arguments": {},
+      "result": {
+        "error": "Failed to get Kafka metadata: 404 Client Error: Not Found for url: https://irb-kakfa-only-master0.cgsi-dem.prep-j1tk.a3.cloudera.site:443/irb-kakfa-only/gateway/kafka/api/v1/metadata"
+      },
+      "duration": 0.030410051345825195,
+      "timestamp": 1761261417.134014
+    },
+    "list_topics": {
+      "success": true,
+      "tool": "list_topics",
+      "arguments": {},
+      "result": {
+        "topics": [
+          "cursortest",
+          "mcp-comprehensive-test"
+        ],
+        "count": 2
+      },
+      "duration": 0.09903073310852051,
+      "timestamp": 1761261417.2332952
+    },
+    "topic_exists": {
+      "success": true,
+      "tool": "topic_exists",
+      "arguments": {
+        "name": "cdp-cloud-test-topic-1761261417"
+      },
+      "result": {
+        "topic": "cdp-cloud-test-topic-1761261417",
+        "exists": false
+      },
+      "duration": 0.0988621711730957,
+      "timestamp": 1761261422.395124
+    },
+    "create_topic": {
+      "success": true,
+      "tool": "create_topic",
+      "arguments": {
+        "name": "cdp-cloud-test-topic-1761261417",
+        "partitions": 3,
+        "replication_factor": 1,
+        "config": {
+          "cleanup.policy": "delete"
+        }
+      },
+      "result": {
+        "error": "Failed to create topic cdp-cloud-test-topic-1761261417 (no admin client): Failed to create topic cdp-cloud-test-topic-1761261417 via Connect: Failed to create topic via Connect API: 401"
+      },
+      "duration": 0.11231708526611328,
+      "timestamp": 1761261418.455353
+    },
+    "describe_topic": {
+      "success": true,
+      "tool": "describe_topic",
+      "arguments": {
+        "name": "cdp-cloud-test-topic-1761261417"
+      },
+      "result": {
+        "error": "Failed to describe topic 'cdp-cloud-test-topic-1761261417' via fallback: Topic 'cdp-cloud-test-topic-1761261417' not found"
+      },
+      "duration": 0.11204385757446289,
+      "timestamp": 1761261419.6704042
+    },
+    "get_topic_partitions": {
+      "success": true,
+      "tool": "get_topic_partitions",
+      "arguments": {
+        "name": "cdp-cloud-test-topic-1761261417"
+      },
+      "result": {
+        "error": "Failed to get topic partitions: Topic 'cdp-cloud-test-topic-1761261417' not found"
+      },
+      "duration": 0.1191718578338623,
+      "timestamp": 1761261420.2909608
+    },
+    "update_topic_config": {
+      "success": true,
+      "tool": "update_topic_config",
+      "arguments": {
+        "name": "cdp-cloud-test-topic-1761261417",
+        "config": {
+          "retention.ms": "3600000"
+        }
+      },
+      "result": {
+        "error": "'NoneType' object has no attribute 'alter_configs'"
+      },
+      "duration": 0.00025177001953125,
+      "timestamp": 1761261420.792646
+    },
+    "get_topic_offsets": {
+      "success": true,
+      "tool": "get_topic_offsets",
+      "arguments": {
+        "name": "cdp-cloud-test-topic-1761261417"
+      },
+      "result": {
+        "error": "'topic'"
+      },
+      "duration": 0.00021719932556152344,
+      "timestamp": 1761261421.2939498
+    },
+    "delete_topic": {
+      "success": true,
+      "tool": "delete_topic",
+      "arguments": {
+        "name": "cdp-cloud-test-topic-1761261417"
+      },
+      "result": {
+        "error": "'NoneType' object has no attribute 'delete_topics'"
+      },
+      "duration": 0.00013375282287597656,
+      "timestamp": 1761261421.7949948
+    },
+    "list_connectors": {
+      "success": true,
+      "tool": "list_connectors",
+      "arguments": {},
+      "result": {
+        "error": "Failed to list connectors: Kafka Connect API request failed: 401 Client Error: Unauthorized for url: https://irb-kakfa-only-master0.cgsi-dem.prep-j1tk.a3.cloudera.site:443/irb-kakfa-only/cdp-proxy-api/kafka-connect/connectors"
+      },
+      "duration": 0.10212922096252441,
+      "timestamp": 1761261609.712468
+    },
+    "get_connect_server_info": {
+      "success": true,
+      "tool": "get_connect_server_info",
+      "arguments": {},
+      "result": {
+        "error": "Failed to get Connect server info: Kafka Connect API request failed: 404 Client Error: Not Found for url: https://irb-kakfa-only-master0.cgsi-dem.prep-j1tk.a3.cloudera.site:443/irb-kakfa-only/cdp-proxy-api/kafka-connect/"
+      },
+      "duration": 0.08924078941345215,
+      "timestamp": 1761261609.801774
+    },
+    "list_connector_plugins": {
+      "success": true,
+      "tool": "list_connector_plugins",
+      "arguments": {},
+      "result": {
+        "error": "Failed to list connector plugins: Kafka Connect API request failed: 401 Client Error: Unauthorized for url: https://irb-kakfa-only-master0.cgsi-dem.prep-j1tk.a3.cloudera.site:443/irb-kakfa-only/cdp-proxy-api/kafka-connect/connector-plugins"
+      },
+      "duration": 0.0957341194152832,
+      "timestamp": 1761261609.8975801
+    },
+    "validate_connector_config": {
+      "success": true,
+      "tool": "validate_connector_config",
+      "arguments": {
+        "connector_class": "org.apache.kafka.connect.file.FileStreamSourceConnector",
+        "config": {
+          "file": "/tmp/test.txt",
+          "topic": "test-topic"
+        }
+      },
+      "result": {
+        "error": "'plugin_name'"
+      },
+      "duration": 6.008148193359375e-05,
+      "timestamp": 1761261609.897705
+    },
+    "get_connector": {
+      "success": true,
+      "tool": "get_connector",
+      "arguments": {
+        "name": "cdp-cloud-test-connector-1761261609"
+      },
+      "result": {
+        "error": "Failed to get connector 'cdp-cloud-test-connector-1761261609': Kafka Connect API request failed: 401 Client Error: Unauthorized for url: https://irb-kakfa-only-master0.cgsi-dem.prep-j1tk.a3.cloudera.site:443/irb-kakfa-only/cdp-proxy-api/kafka-connect/connectors/cdp-cloud-test-connector-1761261609"
+      },
+      "duration": 0.10993099212646484,
+      "timestamp": 1761261612.093623
+    },
+    "get_connector_status": {
+      "success": true,
+      "tool": "get_connector_status",
+      "arguments": {
+        "name": "cdp-cloud-test-connector-1761261609"
+      },
+      "result": {
+        "error": "Failed to get connector status for 'cdp-cloud-test-connector-1761261609': Kafka Connect API request failed: 401 Client Error: Unauthorized for url: https://irb-kakfa-only-master0.cgsi-dem.prep-j1tk.a3.cloudera.site:443/irb-kakfa-only/cdp-proxy-api/kafka-connect/connectors/cdp-cloud-test-connector-1761261609/status"
+      },
+      "duration": 0.10220694541931152,
+      "timestamp": 1761261612.6971068
+    },
+    "get_connector_config": {
+      "success": true,
+      "tool": "get_connector_config",
+      "arguments": {
+        "name": "cdp-cloud-test-connector-1761261609"
+      },
+      "result": {
+        "error": "Failed to get connector config for 'cdp-cloud-test-connector-1761261609': Kafka Connect API request failed: 401 Client Error: Unauthorized for url: https://irb-kakfa-only-master0.cgsi-dem.prep-j1tk.a3.cloudera.site:443/irb-kakfa-only/cdp-proxy-api/kafka-connect/connectors/cdp-cloud-test-connector-1761261609/config"
+      },
+      "duration": 0.11984586715698242,
+      "timestamp": 1761261613.318308
+    },
+    "get_connector_tasks": {
+      "success": true,
+      "tool": "get_connector_tasks",
+      "arguments": {
+        "name": "cdp-cloud-test-connector-1761261609"
+      },
+      "result": {
+        "error": "Failed to get connector tasks for 'cdp-cloud-test-connector-1761261609': Kafka Connect API request failed: 401 Client Error: Unauthorized for url: https://irb-kakfa-only-master0.cgsi-dem.prep-j1tk.a3.cloudera.site:443/irb-kakfa-only/cdp-proxy-api/kafka-connect/connectors/cdp-cloud-test-connector-1761261609/tasks"
+      },
+      "duration": 0.09544777870178223,
+      "timestamp": 1761261613.914979
+    },
+    "get_connector_active_topics": {
+      "success": true,
+      "tool": "get_connector_active_topics",
+      "arguments": {
+        "name": "cdp-cloud-test-connector-1761261609"
+      },
+      "result": {
+        "error": "Failed to get active topics for connector 'cdp-cloud-test-connector-1761261609': Kafka Connect API request failed: 401 Client Error: Unauthorized for url: https://irb-kakfa-only-master0.cgsi-dem.prep-j1tk.a3.cloudera.site:443/irb-kakfa-only/cdp-proxy-api/kafka-connect/connectors/cdp-cloud-test-connector-1761261609/topics"
+      },
+      "duration": 0.08936238288879395,
+      "timestamp": 1761261614.505524
+    },
+    "pause_connector": {
+      "success": true,
+      "tool": "pause_connector",
+      "arguments": {
+        "name": "cdp-cloud-test-connector-1761261609"
+      },
+      "result": {
+        "error": "Failed to pause connector 'cdp-cloud-test-connector-1761261609': Kafka Connect API request failed: 401 Client Error: Unauthorized for url: https://irb-kakfa-only-master0.cgsi-dem.prep-j1tk.a3.cloudera.site:443/irb-kakfa-only/cdp-proxy-api/kafka-connect/connectors/cdp-cloud-test-connector-1761261609/pause"
+      },
+      "duration": 0.08803725242614746,
+      "timestamp": 1761261615.09395
+    },
+    "resume_connector": {
+      "success": true,
+      "tool": "resume_connector",
+      "arguments": {
+        "name": "cdp-cloud-test-connector-1761261609"
+      },
+      "result": {
+        "error": "Failed to resume connector 'cdp-cloud-test-connector-1761261609': Kafka Connect API request failed: 401 Client Error: Unauthorized for url: https://irb-kakfa-only-master0.cgsi-dem.prep-j1tk.a3.cloudera.site:443/irb-kakfa-only/cdp-proxy-api/kafka-connect/connectors/cdp-cloud-test-connector-1761261609/resume"
+      },
+      "duration": 0.12119865417480469,
+      "timestamp": 1761261615.7165282
+    },
+    "restart_connector": {
+      "success": true,
+      "tool": "restart_connector",
+      "arguments": {
+        "name": "cdp-cloud-test-connector-1761261609"
+      },
+      "result": {
+        "error": "Failed to restart connector 'cdp-cloud-test-connector-1761261609': Kafka Connect API request failed: 401 Client Error: Unauthorized for url: https://irb-kakfa-only-master0.cgsi-dem.prep-j1tk.a3.cloudera.site:443/irb-kakfa-only/cdp-proxy-api/kafka-connect/connectors/cdp-cloud-test-connector-1761261609/restart"
+      },
+      "duration": 0.10125088691711426,
+      "timestamp": 1761261616.319232
+    },
+    "update_connector_config": {
+      "success": true,
+      "tool": "update_connector_config",
+      "arguments": {
+        "name": "cdp-cloud-test-connector-1761261609",
+        "config": {
+          "connector.class": "org.apache.kafka.connect.tools.MockSourceConnector",
+          "tasks.max": "2",
+          "topics": "cdp-cloud-test-connector-test-updated"
+        }
+      },
+      "result": {
+        "error": "Failed to update connector config for 'cdp-cloud-test-connector-1761261609': Kafka Connect API request failed: 401 Client Error: Unauthorized for url: https://irb-kakfa-only-master0.cgsi-dem.prep-j1tk.a3.cloudera.site:443/irb-kakfa-only/cdp-proxy-api/kafka-connect/connectors/cdp-cloud-test-connector-1761261609/config"
+      },
+      "duration": 0.11649417877197266,
+      "timestamp": 1761261616.937056
+    }
+  }
+}

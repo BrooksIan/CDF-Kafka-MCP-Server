@@ -1,5 +1,9 @@
 # CDF Kafka MCP Server
 
+<div align="center">
+  <img src="images/kafka-mcp.png" alt="CDF Kafka MCP Server Architecture" width="800"/>
+</div>
+
 A Model Context Protocol (MCP) server for Apache Kafka with Apache Knox authentication support, inspired by the [SSB-MCP-Server](https://github.com/BrooksIan/SSB-MCP-Server) implementation.
 
 ## Overview
@@ -530,6 +534,9 @@ If MCP server is not working:
 # CDP Cloud (Cloudera Data Platform)
 ./Testing/run_cloud_tests.sh cdp-cloud
 
+# CDP Cloud MCP Tools Test (Comprehensive)
+./Testing/run_cdp_cloud_tests.sh
+
 # Generic SASL_SSL
 ./Testing/run_cloud_tests.sh generic
 ```
@@ -568,6 +575,7 @@ uv run python3 Testing/test_cloud_connection.py
 ### Documentation
 
 - [CLOUD_TESTING_SETUP.md](CLOUD_TESTING_SETUP.md) - Comprehensive cloud testing guide
+- [Testing/CDP_CLOUD_TESTING.md](Testing/CDP_CLOUD_TESTING.md) - CDP Cloud specific testing guide
 - [Cloud Deployment Configurations](#cloud-deployment-configurations) - Configuration examples
 
 ## Development

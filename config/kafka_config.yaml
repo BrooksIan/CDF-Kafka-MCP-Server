@@ -10,8 +10,8 @@ kafka:
 
   # SASL configuration for CDP Cloud
   sasl_mechanism: "PLAIN"  # CDP Cloud typically uses PLAIN
-  sasl_username: ""  # Will be set via environment variable
-  sasl_password: ""  # Will be set via environment variable
+  sasl_username: "ibrooks"  # CDP Cloud username
+  sasl_password: "Admin12345#"  # CDP Cloud password
 
   # TLS configuration for CDP Cloud
   tls_enabled: true

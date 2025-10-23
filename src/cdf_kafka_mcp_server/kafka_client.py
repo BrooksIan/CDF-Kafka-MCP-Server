@@ -84,7 +84,15 @@ class KafkaClient:
                 raise KnoxError("Failed to connect to Knox Gateway")
 
             # Get bootstrap servers through Knox
-            self._bootstrap_servers = self.knox_client.get_kafka_bootstrap_servers()
+            knox_servers = self.knox_client.get_kafka_bootstrap_servers()
+            if knox_servers:
+                self._bootstrap_servers = knox_servers
+            else:
+                # Fallback to configuration bootstrap servers
+                if isinstance(config.kafka.bootstrap_servers, list):
+                    self._bootstrap_servers = config.kafka.bootstrap_servers
+                else:
+                    self._bootstrap_servers = [config.kafka.bootstrap_servers]
         else:
             # Use direct Kafka configuration
             if isinstance(config.kafka.bootstrap_servers, list):
@@ -551,7 +559,23 @@ class KafkaClient:
 
     def _get_connect_url(self) -> str:
         """Get the Kafka Connect REST API URL."""
-        # Handle both string and list formats for bootstrap_servers
+        # For CDP Cloud, use the CDP proxy API endpoint
+        if hasattr(self.config, 'knox') and self.config.knox.gateway:
+            # Extract the base URL from Knox Gateway and use CDP proxy API
+            gateway_url = self.config.knox.gateway
+            if '/cdp-proxy-token/' in gateway_url:
+                # Replace cdp-proxy-token with cdp-proxy-api/kafka-connect
+                base_url = gateway_url.replace('/cdp-proxy-token/', '/cdp-proxy-api/kafka-connect')
+                return base_url
+            elif '/cdp-proxy-token' in gateway_url:
+                # Handle case where there's no trailing slash
+                base_url = gateway_url.replace('/cdp-proxy-token', '/cdp-proxy-api/kafka-connect')
+                return base_url
+            else:
+                # Fallback: append kafka-connect to the gateway URL
+                return f"{gateway_url.rstrip('/')}/kafka-connect"
+        
+        # Fallback to standard Kafka Connect port
         if isinstance(self.config.kafka.bootstrap_servers, list):
             bootstrap_server = self.config.kafka.bootstrap_servers[0]
         else:
@@ -566,6 +590,24 @@ class KafkaClient:
 
         url = f"{self._get_connect_url()}{endpoint}"
         headers = {"Content-Type": "application/json"}
+        
+        # Add authentication for CDP proxy API
+        if hasattr(self, 'knox_client') and self.knox_client:
+            try:
+                # For CDP proxy API, use basic authentication with SASL credentials
+                import base64
+                username = self.config.kafka.sasl_username
+                password = self.config.kafka.sasl_password
+                if username and password:
+                    credentials = f"{username}:{password}"
+                    encoded_credentials = base64.b64encode(credentials.encode()).decode()
+                    headers["Authorization"] = f"Basic {encoded_credentials}"
+                else:
+                    # Fallback to Knox token
+                    token = self.knox_client.get_token()
+                    headers["Authorization"] = f"Bearer {token}"
+            except Exception as e:
+                print(f"Warning: Failed to get authentication for Connect API: {e}")
 
         try:
             if method.upper() == "GET":

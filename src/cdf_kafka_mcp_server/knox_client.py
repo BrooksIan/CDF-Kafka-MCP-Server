@@ -207,13 +207,13 @@ class KnoxClient:
                 elif isinstance(servers, str):
                     return [server.strip() for server in servers.split(',')]
 
-            # Fallback: return the gateway URL as bootstrap server
-            # This is a simplified approach - in practice, you'd need to get the actual Kafka broker addresses
-            return [self.config.gateway]
+            # Fallback: return empty list - should not use gateway URL as bootstrap server
+            # The actual Kafka bootstrap servers should be provided in the configuration
+            return []
 
         except KnoxError:
-            # Fallback to gateway URL
-            return [self.config.gateway]
+            # Fallback: return empty list - should not use gateway URL as bootstrap server
+            return []
 
     def close(self) -> None:
         """Close the Knox client session."""
