@@ -818,21 +818,77 @@ class CDFKafkaMCPServer:
     async def _handle_describe_topic(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """Handle describe_topic tool."""
         name = arguments["name"]
-        topic_info = self.kafka_client.describe_topic(name)
-
+        
+        # Try CDP REST client first
+        cdp_rest_client = self._get_cdp_rest_client()
+        if cdp_rest_client:
+            try:
+                topic_info = cdp_rest_client.get_topic(name)
+                return {
+                    "name": name,
+                    "info": topic_info,
+                    "method": "cdp_rest_api"
+                }
+            except Exception as e:
+                self.logger.warning(f"CDP REST client describe_topic failed: {e}")
+        
+        # Fallback to Kafka client
+        if self.kafka_client:
+            try:
+                topic_info = self.kafka_client.describe_topic(name)
+                return {
+                    "name": topic_info.name,
+                    "partitions": topic_info.partitions,
+                    "replication_factor": topic_info.replication_factor,
+                    "config": topic_info.config,
+                    "partition_details": topic_info.partition_details,
+                    "method": "kafka_client"
+                }
+            except Exception as e:
+                self.logger.warning(f"Kafka client describe_topic failed: {e}")
+        
         return {
-            "name": topic_info.name,
-            "partitions": topic_info.partitions,
-            "replication_factor": topic_info.replication_factor,
-            "config": topic_info.config,
-            "partition_details": topic_info.partition_details
+            "name": name,
+            "error": "No available client for topic description",
+            "method": "none"
         }
 
     async def _handle_delete_topic(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """Handle delete_topic tool."""
         name = arguments["name"]
-        self.kafka_client.delete_topic(name)
-        return {"message": f"Topic '{name}' deleted successfully", "topic": name}
+        
+        # Try CDP REST client first
+        cdp_rest_client = self._get_cdp_rest_client()
+        if cdp_rest_client:
+            try:
+                result = cdp_rest_client.delete_topic(name)
+                return {
+                    "message": f"Topic '{name}' deleted successfully",
+                    "topic": name,
+                    "method": "cdp_rest_api",
+                    "result": result
+                }
+            except Exception as e:
+                self.logger.warning(f"CDP REST client delete_topic failed: {e}")
+        
+        # Fallback to Kafka client
+        if self.kafka_client:
+            try:
+                self.kafka_client.delete_topic(name)
+                return {
+                    "message": f"Topic '{name}' deleted successfully",
+                    "topic": name,
+                    "method": "kafka_client"
+                }
+            except Exception as e:
+                self.logger.warning(f"Kafka client delete_topic failed: {e}")
+        
+        return {
+            "message": f"Topic '{name}' deletion failed",
+            "topic": name,
+            "method": "none",
+            "error": "No available client for topic deletion"
+        }
 
     async def _handle_topic_exists(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """Handle topic_exists tool."""
@@ -1511,6 +1567,84 @@ class CDFKafkaMCPServer:
             }
         except Exception as e:
             return {"error": f"Failed to run health check '{check_name}': {e}"}
+    
+    async def _handle_test_authentication(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        """Handle test_authentication tool."""
+        cdp_rest_client = self._get_cdp_rest_client()
+        if cdp_rest_client:
+            try:
+                return cdp_rest_client.test_authentication()
+            except Exception as e:
+                return {
+                    "authenticated": False,
+                    "error": str(e),
+                    "method": "cdp_rest_api"
+                }
+        
+        return {
+            "authenticated": False,
+            "error": "No CDP REST client available",
+            "method": "none"
+        }
+    
+    async def _handle_discover_auth_endpoints(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        """Handle discover_auth_endpoints tool."""
+        cdp_rest_client = self._get_cdp_rest_client()
+        if cdp_rest_client:
+            try:
+                return cdp_rest_client.discover_auth_endpoints()
+            except Exception as e:
+                return {
+                    "error": str(e),
+                    "endpoints": {}
+                }
+        
+        return {
+            "error": "No CDP REST client available",
+            "endpoints": {}
+        }
+    
+    async def _handle_refresh_authentication(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        """Handle refresh_authentication tool."""
+        cdp_rest_client = self._get_cdp_rest_client()
+        if cdp_rest_client:
+            try:
+                success = cdp_rest_client.refresh_authentication()
+                return {
+                    "success": success,
+                    "message": "Authentication refreshed successfully" if success else "Failed to refresh authentication"
+                }
+            except Exception as e:
+                return {
+                    "success": False,
+                    "error": str(e)
+                }
+        
+        return {
+            "success": False,
+            "error": "No CDP REST client available"
+        }
+    
+    async def _handle_get_cdp_clusters(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        """Handle get_cdp_clusters tool."""
+        cdp_rest_client = self._get_cdp_rest_client()
+        if cdp_rest_client:
+            try:
+                clusters = cdp_rest_client.get_clusters()
+                return {
+                    "clusters": clusters,
+                    "count": len(clusters) if isinstance(clusters, list) else 0,
+                    "method": "cdp_rest_api"
+                }
+            except Exception as e:
+                self.logger.warning(f"CDP REST client get_clusters failed: {e}")
+        
+        return {
+            "clusters": [],
+            "count": 0,
+            "method": "none",
+            "error": "No CDP REST client available"
+        }
 
     async def run(self) -> None:
         """Run the MCP server."""
