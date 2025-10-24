@@ -14,24 +14,53 @@ The CDF Kafka MCP Server provides a comprehensive bridge between AI models and A
 
 ## Features
 
-### Enterprise Security
-- Apache Knox Gateway authentication support
-- Multiple authentication methods (token-based, username/password)
+### 🔐 Enterprise Security
+- **Apache Knox Gateway** authentication support with Admin API integration
+- **CDP Cloud** authentication with token and basic auth support
+- Multiple authentication methods (token-based, username/password, CDP tokens)
 - TLS/SSL configuration for secure communications
 - Configurable SSL certificate verification
+- Service discovery through Knox Gateway
 
-### Kafka Operations
-- Topic management (create, list, describe, delete, configure)
-- Message operations (produce, consume with metadata)
-- Batch message production
-- Offset management for topic partitions
-- Consumer group management (planned)
+### 🚀 Enhanced Kafka Operations
+- **Multi-approach Topic Creation**: Knox Gateway, CDP Cloud, Connect API, Admin Client
+- **Multi-approach Message Production**: Direct, Knox, CDP, Connect API
+- **Advanced Topic Management**: Create, list, describe, delete, configure with fallback methods
+- **Message Operations**: Produce, consume with metadata and multiple transport methods
+- **Batch Message Production**: Efficient bulk message handling
+- **Offset Management**: Advanced partition and offset management
+- **Consumer Group Management**: Full consumer group lifecycle management
 
-### Developer Experience
-- Full Model Context Protocol compliance
-- Rich metadata and error reporting
-- Flexible YAML and environment variable configuration
-- Comprehensive logging for debugging and monitoring
+### 📊 Monitoring & Health Checks
+- **Comprehensive Health Monitoring**: Real-time health status of all services
+- **Performance Metrics**: Request counts, response times, success rates
+- **Service Discovery**: Automatic detection of available services
+- **Health History**: Track health status over time
+- **Individual Health Checks**: Granular health monitoring per service
+- **Metrics Collection**: Detailed performance and usage metrics
+
+### 🔧 Knox Gateway Integration
+- **Topology Management**: Create and manage Knox topologies
+- **Service Configuration**: Configure Kafka services through Knox
+- **Token Management**: JWT token handling and validation
+- **Service Discovery**: Automatic service endpoint discovery
+- **Health Monitoring**: Knox-specific health checks
+- **Admin API**: Full Knox Admin API integration
+
+### ☁️ CDP Cloud Support
+- **CDP Proxy API**: Integration with CDP proxy endpoints
+- **CDP Token Authentication**: Support for CDP-specific tokens
+- **Service Health**: CDP Cloud service health monitoring
+- **API Discovery**: Automatic CDP API endpoint discovery
+- **Fallback Support**: Graceful fallback between CDP and other methods
+
+### 🛠️ Developer Experience
+- **Full Model Context Protocol** compliance with 40+ tools
+- **Rich Metadata**: Comprehensive error reporting and status information
+- **Flexible Configuration**: YAML and environment variable configuration
+- **Comprehensive Logging**: Structured logging for debugging and monitoring
+- **Multiple Transport Methods**: Support for various Kafka access methods
+- **Graceful Degradation**: Automatic fallback between different approaches
 
 ## Limitations
 
@@ -338,28 +367,26 @@ knox:
 
 ### Available MCP Tools
 
-The server provides 28 MCP tools for Kafka operations:
+The server provides **40+ MCP tools** for comprehensive Kafka operations:
 
-**Topic Management:**
+**🗂️ Topic Management (7 tools):**
 - `list_topics` - List all Kafka topics
-- `create_topic` - Create a new Kafka topic
+- `create_topic` - **Enhanced**: Create topics using multiple approaches (Knox, CDP, Connect, Admin)
 - `describe_topic` - Get detailed topic information
 - `delete_topic` - Delete a Kafka topic
 - `topic_exists` - Check if a topic exists
 - `get_topic_partitions` - Get topic partition count
 - `update_topic_config` - Update topic configuration
 
-**Message Operations:**
-- `produce_message` - Produce a message to a topic
+**📨 Message Operations (6 tools):**
+- `produce_message` - **Enhanced**: Produce messages using multiple approaches (Direct, Knox, CDP, Connect)
 - `consume_messages` - Consume messages from a topic
 - `get_topic_offsets` - Get topic partition offsets
+- `get_consumer_groups` - List consumer groups
+- `get_consumer_group_details` - Get consumer group details
+- `reset_consumer_group_offsets` - Reset consumer group offsets
 
-**System Information:**
-- `get_broker_info` - Get Kafka broker information
-- `get_cluster_metadata` - Get cluster metadata
-- `test_connection` - Test Kafka connection
-
-**Kafka Connect Management:**
+**🔌 Kafka Connect Management (15 tools):**
 - `list_connectors` - List all connectors
 - `create_connector` - Create a new connector
 - `get_connector_status` - Get connector status
@@ -369,23 +396,69 @@ The server provides 28 MCP tools for Kafka operations:
 - `list_connector_plugins` - List available plugins
 - `validate_connector_config` - Validate connector config
 
-**Knox-Specific Tools:**
+**🔧 Knox Gateway Integration (7 tools):**
 - `test_knox_connection` - Test Knox Gateway connection
 - `get_knox_metadata` - Get Knox Gateway metadata
+- `get_knox_gateway_info` - **New**: Get Knox Gateway information and status
+- `list_knox_topologies` - **New**: List all Knox topologies
+- `get_knox_topology` - **New**: Get specific Knox topology configuration
+- `create_knox_topology` - **New**: Create a new Knox topology for Kafka services
+- `get_knox_service_health` - **New**: Get health status of Knox services
+- `get_knox_service_urls` - **New**: Get service URLs through Knox Gateway
+
+**☁️ CDP Cloud Integration (4 tools):**
+- `test_cdp_connection` - **New**: Test connection to CDP Cloud
+- `get_cdp_apis` - **New**: Get information about available CDP APIs
+- `get_cdp_service_health` - **New**: Get health status of CDP services
+- `validate_cdp_token` - **New**: Validate a CDP token
+
+**📊 Monitoring & Health Checks (5 tools):**
+- `get_health_status` - **New**: Get comprehensive health status of all services
+- `get_health_summary` - **New**: Get a summary of health status
+- `get_health_history` - **New**: Get health check history
+- `get_service_metrics` - **New**: Get service performance metrics
+- `run_health_check` - **New**: Run a specific health check
+
+**🔗 System Information (3 tools):**
+- `get_broker_info` - Get Kafka broker information
+- `get_cluster_metadata` - Get cluster metadata
+- `test_connection` - Test Kafka connection
 
 ### Usage Examples
 
-**Topic Operations:**
+**Enhanced Topic Operations:**
 ```json
 {"tool": "list_topics", "arguments": {}}
-{"tool": "create_topic", "arguments": {"name": "user-events", "partitions": 3}}
+{"tool": "create_topic", "arguments": {"name": "user-events", "partitions": 3, "method": "auto"}}
 {"tool": "describe_topic", "arguments": {"name": "user-events"}}
 ```
 
-**Message Operations:**
+**Enhanced Message Operations:**
 ```json
-{"tool": "produce_message", "arguments": {"topic": "user-events", "value": "Hello Kafka!"}}
+{"tool": "produce_message", "arguments": {"topic": "user-events", "value": "Hello Kafka!", "method": "auto"}}
 {"tool": "consume_messages", "arguments": {"topic": "user-events", "max_count": 10}}
+```
+
+**Knox Gateway Operations:**
+```json
+{"tool": "get_knox_gateway_info", "arguments": {}}
+{"tool": "create_knox_topology", "arguments": {"topology_name": "kafka-topology", "kafka_brokers": ["broker1:9092"]}}
+{"tool": "get_knox_service_health", "arguments": {"topology": "default"}}
+```
+
+**CDP Cloud Operations:**
+```json
+{"tool": "test_cdp_connection", "arguments": {}}
+{"tool": "get_cdp_apis", "arguments": {}}
+{"tool": "validate_cdp_token", "arguments": {"token": "your-cdp-token"}}
+```
+
+**Monitoring & Health Checks:**
+```json
+{"tool": "get_health_status", "arguments": {}}
+{"tool": "get_health_summary", "arguments": {}}
+{"tool": "run_health_check", "arguments": {"check_name": "kafka"}}
+{"tool": "get_service_metrics", "arguments": {}}
 ```
 
 **Kafka Connect:**

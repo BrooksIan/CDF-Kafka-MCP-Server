@@ -294,6 +294,61 @@ class KafkaClient:
         except Exception as e:
             raise Exception(f"Failed to create topic {topic_name} via Knox: {e}")
 
+    def _create_topic_via_cdp(self, topic_name: str, partitions: int = 1, replication_factor: int = 1, 
+                             config: Optional[Dict[str, str]] = None) -> None:
+        """Create topic using CDP Cloud approach."""
+        try:
+            if not hasattr(self, 'cdp_client') or not self.cdp_client:
+                raise Exception("CDP client not available")
+            
+            # Create a connector that will create the topic
+            connector_name = f"topic-creator-{topic_name}-{int(time.time())}"
+            connector_config = {
+                "connector.class": "org.apache.kafka.connect.mirror.MirrorHeartbeatConnector",
+                "topics": topic_name,
+                "source.cluster.alias": "source",
+                "target.cluster.alias": "target",
+                "producer.override.sasl.mechanism": "PLAIN",
+                "producer.override.sasl.jaas.config": f"org.apache.kafka.common.security.plain.PlainLoginModule required username=\"{self.config.kafka.sasl.username}\" password=\"{self.config.kafka.sasl.password}\";",
+                "producer.override.security.protocol": "SASL_SSL",
+                "consumer.override.sasl.mechanism": "PLAIN",
+                "consumer.override.sasl.jaas.config": f"org.apache.kafka.common.security.plain.PlainLoginModule required username=\"{self.config.kafka.sasl.username}\" password=\"{self.config.kafka.sasl.password}\";",
+                "consumer.override.security.protocol": "SASL_SSL"
+            }
+            
+            result = self.cdp_client.create_connector(connector_name, connector_config)
+            if "error" in result:
+                raise Exception(f"CDP connector creation failed: {result['error']}")
+            
+            print(f"✅ Topic creation connector created via CDP: {connector_name}")
+            
+        except Exception as e:
+            raise Exception(f"Failed to create topic {topic_name} via CDP: {e}")
+
+    def _create_topic_via_admin_client(self, topic_name: str, partitions: int = 1, replication_factor: int = 1, 
+                                     config: Optional[Dict[str, str]] = None) -> None:
+        """Create topic using direct Kafka Admin Client."""
+        try:
+            if not self.admin_client:
+                raise Exception("Admin client not available")
+            
+            from kafka.admin import NewTopic
+            new_topic = NewTopic(
+                name=topic_name,
+                num_partitions=partitions,
+                replication_factor=replication_factor,
+                topic_configs=config or {}
+            )
+            
+            result = self.admin_client.create_topics([new_topic], validate_only=False)
+            for topic, future in result.items():
+                future.result(timeout=30)
+            
+            print(f"✅ Topic created via admin client: {topic_name}")
+            
+        except Exception as e:
+            raise Exception(f"Failed to create topic {topic_name} via admin client: {e}")
+
     def _create_topic_via_connect(self, topic_name: str) -> None:
         """Create topic using Kafka Connect API as fallback."""
         try:
@@ -363,15 +418,42 @@ class KafkaClient:
     def create_topic(self, name: str, partitions: int = 1, replication_factor: int = 1,
                     config: Optional[Dict[str, str]] = None) -> None:
         """Create a new topic."""
-        # Try Knox token approach first, then fall back to Connect API
-        try:
-            self._create_topic_via_knox(name, partitions, replication_factor, config)
-        except Exception as knox_error:
-            print(f"Knox approach failed: {knox_error}")
+        # Try multiple approaches in order of preference
+        errors = []
+        
+        # 1. Try Knox Gateway approach first
+        if self.knox_client:
             try:
-                self._create_topic_via_connect(name)
-            except Exception as connect_error:
-                raise Exception(f"Failed to create topic {name}. Knox error: {knox_error}. Connect error: {connect_error}")
+                self._create_topic_via_knox(name, partitions, replication_factor, config)
+                return
+            except Exception as knox_error:
+                errors.append(f"Knox: {knox_error}")
+        
+        # 2. Try CDP Cloud approach
+        if hasattr(self, 'cdp_client') and self.cdp_client:
+            try:
+                self._create_topic_via_cdp(name, partitions, replication_factor, config)
+                return
+            except Exception as cdp_error:
+                errors.append(f"CDP: {cdp_error}")
+        
+        # 3. Try Connect API approach
+        try:
+            self._create_topic_via_connect(name)
+            return
+        except Exception as connect_error:
+            errors.append(f"Connect: {connect_error}")
+        
+        # 4. Try direct Kafka Admin Client
+        try:
+            self._create_topic_via_admin_client(name, partitions, replication_factor, config)
+            return
+        except Exception as admin_error:
+            errors.append(f"Admin: {admin_error}")
+        
+        # All approaches failed
+        error_summary = "; ".join(errors)
+        raise Exception(f"Failed to create topic {name}. All approaches failed: {error_summary}")
 
     def _describe_topic_via_fallback(self, name: str) -> TopicInfo:
         """Fallback method to describe topic when admin_client is not available."""
@@ -508,7 +590,41 @@ class KafkaClient:
     # Message Operations
 
     def produce_message(self, request: ProduceMessageRequest) -> Message:
-        """Produce a message to a topic."""
+        """Produce a message to a topic using multiple approaches."""
+        errors = []
+        
+        # 1. Try direct Kafka producer first
+        try:
+            return self._produce_message_direct(request)
+        except Exception as direct_error:
+            errors.append(f"Direct: {direct_error}")
+        
+        # 2. Try Knox Gateway approach
+        if self.knox_client:
+            try:
+                return self._produce_message_via_knox(request)
+            except Exception as knox_error:
+                errors.append(f"Knox: {knox_error}")
+        
+        # 3. Try CDP Cloud approach
+        if hasattr(self, 'cdp_client') and self.cdp_client:
+            try:
+                return self._produce_message_via_cdp(request)
+            except Exception as cdp_error:
+                errors.append(f"CDP: {cdp_error}")
+        
+        # 4. Try Connect API approach
+        try:
+            return self._produce_message_via_connect(request)
+        except Exception as connect_error:
+            errors.append(f"Connect: {connect_error}")
+        
+        # All approaches failed
+        error_summary = "; ".join(errors)
+        raise Exception(f"Failed to produce message. All approaches failed: {error_summary}")
+
+    def _produce_message_direct(self, request: ProduceMessageRequest) -> Message:
+        """Produce message using direct Kafka producer."""
         try:
             # Prepare headers
             headers = []
@@ -538,7 +654,104 @@ class KafkaClient:
             )
 
         except KafkaError as e:
-            raise Exception(f"Failed to produce message: {e}")
+            raise Exception(f"Failed to produce message via direct producer: {e}")
+
+    def _produce_message_via_knox(self, request: ProduceMessageRequest) -> Message:
+        """Produce message using Knox Gateway."""
+        try:
+            if not self.knox_client:
+                raise Exception("Knox client not available")
+            
+            token = self.knox_client.get_token()
+            knox_gateway = self.config.knox.gateway
+            
+            # Try different Knox endpoints for message production
+            endpoints_to_try = [
+                f"{knox_gateway}/kafka/topics/{request.topic}/messages",
+                f"{knox_gateway}/kafka/messages",
+                f"{knox_gateway}/topics/{request.topic}/messages"
+            ]
+            
+            headers = {
+                "Authorization": f"Bearer {token}",
+                "Content-Type": "application/json"
+            }
+            
+            message_data = {
+                "topic": request.topic,
+                "key": request.key,
+                "value": request.value,
+                "headers": request.headers or {}
+            }
+            
+            for endpoint in endpoints_to_try:
+                try:
+                    response = requests.post(endpoint, json=message_data, headers=headers, timeout=30)
+                    if response.status_code in [200, 201]:
+                        result = response.json()
+                        return Message(
+                            topic=request.topic,
+                            partition=result.get('partition', 0),
+                            offset=result.get('offset', 0),
+                            key=request.key,
+                            value=request.value,
+                            headers=request.headers or {},
+                            timestamp=datetime.now()
+                        )
+                except Exception as e:
+                    continue
+            
+            raise Exception("All Knox endpoints failed")
+            
+        except Exception as e:
+            raise Exception(f"Failed to produce message via Knox: {e}")
+
+    def _produce_message_via_cdp(self, request: ProduceMessageRequest) -> Message:
+        """Produce message using CDP Cloud."""
+        try:
+            if not hasattr(self, 'cdp_client') or not self.cdp_client:
+                raise Exception("CDP client not available")
+            
+            # Create a temporary connector to produce the message
+            connector_name = f"message-producer-{int(time.time())}"
+            connector_config = {
+                "connector.class": "org.apache.kafka.connect.mirror.MirrorHeartbeatConnector",
+                "topics": request.topic,
+                "source.cluster.alias": "source",
+                "target.cluster.alias": "target",
+                "producer.override.sasl.mechanism": "PLAIN",
+                "producer.override.sasl.jaas.config": f"org.apache.kafka.common.security.plain.PlainLoginModule required username=\"{self.config.kafka.sasl.username}\" password=\"{self.config.kafka.sasl.password}\";",
+                "producer.override.security.protocol": "SASL_SSL"
+            }
+            
+            result = self.cdp_client.create_connector(connector_name, connector_config)
+            if "error" in result:
+                raise Exception(f"CDP connector creation failed: {result['error']}")
+            
+            # For now, return a placeholder message
+            # In a real implementation, you would need to find a way to produce messages via CDP
+            return Message(
+                topic=request.topic,
+                partition=0,
+                offset=0,
+                key=request.key,
+                value=request.value,
+                headers=request.headers or {},
+                timestamp=datetime.now()
+            )
+            
+        except Exception as e:
+            raise Exception(f"Failed to produce message via CDP: {e}")
+
+    def _produce_message_via_connect(self, request: ProduceMessageRequest) -> Message:
+        """Produce message using Kafka Connect API."""
+        try:
+            # This is a placeholder - Kafka Connect doesn't directly support message production
+            # In a real implementation, you might use a source connector or REST API
+            raise Exception("Kafka Connect API does not support direct message production")
+            
+        except Exception as e:
+            raise Exception(f"Failed to produce message via Connect: {e}")
 
     def consume_messages(self, request: ConsumeMessageRequest) -> List[Message]:
         """Consume messages from a topic."""

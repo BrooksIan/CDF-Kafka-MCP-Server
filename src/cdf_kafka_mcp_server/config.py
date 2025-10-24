@@ -41,6 +41,35 @@ class KnoxConfig(BaseModel):
         return bool(self.token or (self.username and self.password))
 
 
+class CDPConfig(BaseModel):
+    """CDP Cloud configuration."""
+
+    url: str = Field(..., description="CDP Cloud base URL")
+    username: str = Field(..., description="Username for CDP authentication")
+    password: str = Field(..., description="Password for CDP authentication")
+    token: Optional[str] = Field(None, description="CDP token for authentication")
+    verify_ssl: bool = Field(True, description="Verify SSL certificates")
+    timeout: int = Field(30, description="Request timeout in seconds")
+
+    @field_validator('url')
+    def validate_url(cls, v: str) -> str:
+        """Validate CDP URL format."""
+        if not v.startswith(('http://', 'https://')):
+            raise ValueError("CDP URL must start with http:// or https://")
+        return v.rstrip('/')
+
+    @field_validator('token')
+    def validate_token(cls, v: Optional[str]) -> Optional[str]:
+        """Validate token format."""
+        if v is not None and v.strip() == "":
+            return None
+        return v
+
+    def is_authenticated(self) -> bool:
+        """Check if authentication is configured."""
+        return bool(self.token or (self.username and self.password))
+
+
 class KafkaConfig(BaseModel):
     """Kafka cluster configuration."""
 
@@ -86,6 +115,7 @@ class Config(BaseModel):
 
     kafka: KafkaConfig = Field(..., description="Kafka configuration")
     knox: Optional[KnoxConfig] = Field(None, description="Knox configuration")
+    cdp: Optional[CDPConfig] = Field(None, description="CDP Cloud configuration")
     log_level: str = Field("INFO", description="Log level")
 
     @field_validator('log_level')
@@ -99,6 +129,10 @@ class Config(BaseModel):
     def is_knox_enabled(self) -> bool:
         """Check if Knox authentication is enabled."""
         return self.knox is not None and self.knox.is_authenticated()
+
+    def is_cdp_enabled(self) -> bool:
+        """Check if CDP Cloud authentication is enabled."""
+        return self.cdp is not None and self.cdp.is_authenticated()
 
 
 def load_config(config_path: Optional[str] = None) -> Config:
