@@ -12,9 +12,9 @@ class SMMAPITester:
     """Test SMM API endpoint for Kafka operations."""
     
     def __init__(self):
-        self.base_url = "https://irb-kakfa-only-master0.cgsi-dem.prep-j1tk.a3.cloudera.site:443/irb-kakfa-only/cdp-proxy-api/smm-api"
-        self.username = "ibrooks"
-        self.password = "Admin12345#"
+        self.base_url = os.getenv("SMM_API_ENDPOINT", "https://your-cdp-cluster.example.com:443/your-cluster/cdp-proxy-api/smm-api")
+        self.username = os.getenv("CDP_REST_USERNAME", "your-username")
+        self.password = os.getenv("CDP_REST_PASSWORD", "your-password")
         
         # Basic auth header
         credentials = f"{self.username}:{self.password}"

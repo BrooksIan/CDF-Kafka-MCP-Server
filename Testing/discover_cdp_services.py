@@ -361,9 +361,9 @@ class CDPServiceDiscovery:
 def main():
     """Main function to run CDP service discovery."""
     # Configuration
-    base_url = "https://irb-kakfa-only-master0.cgsi-dem.prep-j1tk.a3.cloudera.site:443"
-    username = "ibrooks"
-    password = "Admin12345#"
+    base_url = os.getenv("CDP_REST_BASE_URL", "https://your-cdp-cluster.example.com:443")
+    username = os.getenv("CDP_REST_USERNAME", "your-username")
+    password = os.getenv("CDP_REST_PASSWORD", "your-password")
     
     print("🚀 CDP Service Discovery and Configuration")
     print("=" * 60)

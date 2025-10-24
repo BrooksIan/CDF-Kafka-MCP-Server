@@ -26,10 +26,10 @@ def test_knox_gateway_integration():
     print("=" * 60)
     
     # Configuration
-    gateway_url = "https://irb-kakfa-only-master0.cgsi-dem.prep-j1tk.a3.cloudera.site/irb-kakfa-only"
-    admin_ui_url = "https://irb-kakfa-only-master0.cgsi-dem.prep-j1tk.a3.cloudera.site/irb-kakfa-only/manager/admin-ui/"
-    username = "ibrooks"
-    password = "Admin12345#"
+    gateway_url = os.getenv("KNOX_GATEWAY", "https://your-knox-gateway.example.com:8443/gateway")
+    admin_ui_url = os.getenv("KNOX_ADMIN_UI", "https://your-knox-gateway.example.com:8443/gateway/manager/admin-ui/")
+    username = os.getenv("KNOX_USERNAME", "your-username")
+    password = os.getenv("KNOX_PASSWORD", "your-password")
     
     print(f"🔗 Gateway URL: {gateway_url}")
     print(f"🔗 Admin UI URL: {admin_ui_url}")

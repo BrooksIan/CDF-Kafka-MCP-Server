@@ -22,9 +22,9 @@ class CDPAuthenticationTester:
     """Test CDP authentication mechanisms."""
     
     def __init__(self):
-        self.base_url = "https://irb-kakfa-only-master0.cgsi-dem.prep-j1tk.a3.cloudera.site:443"
-        self.username = "ibrooks"
-        self.password = "Admin12345#"
+        self.base_url = os.getenv("CDP_REST_BASE_URL", "https://your-cdp-cluster.example.com:443")
+        self.username = os.getenv("CDP_REST_USERNAME", "your-username")
+        self.password = os.getenv("CDP_REST_PASSWORD", "your-password")
         self.token = "eyJqa3UiOiJodHRwczovL2lyYi1rYWtmYS1vbmx5LW1hc3RlcjAuY2dzaS1kZW0ucHJlcC1qMXRrLmEzLmNsb3VkZXJhLnNpdGUvaXJiLWtha2ZhLW9ubHkvaG9tZXBhZ2Uva25veHRva2VuL2FwaS92Mi9qd2tzLmpzb24iLCJraWQiOiJYa1JVQTczLUtwNGs2MVVKSGsxZUJDRGhOeVhwRDdEbUVaQUJ1dnM2cjlRIiwidHlwIjoiSldUIiwiYWxnIjoiUlMyNTYifQ.eyJzdWIiOiJpYnJvb2tzIiwiYXVkIjoiY2RwLXByb3h5LXRva2VuIiwiamt1IjoiaHR0cHM6Ly9pcmIta2FrZmEtb25seS1tYXN0ZXIwLmNnc2ktZGVtLnByZXAtajF0ay5hMy5jbG91ZGVyYS5zaXRlL2lyYi1rYWtmYS1vbmx5L2hvbWVwYWdlL2tub3h0b2tlbi9hcGkvdjIvandrcy5qc29uIiwia2lkIjoiWGtSVUE3My1LcDRrNjFVSGhrMWVCQ0RoTnlYcEQ3RG1FWkFCdXZzNnI5USIsImlzcyI6IktOT1hTU08iLCJleHAiOjE3NjEzNTA5ODMsIm1hbmFnZWQudG9rZW4iOiJ0cnVlIiwia25veC5pZCI6IjdiNTYwZWMxLTRiMjgtNGNlMS05Y2VhLWQ4ODQ5MTA1ZjgzMiJ9.NB_nXwD4xUCAiEFqE7kF_ml3TOS0GzAsTzWtUVYyaEzxr0SI1mucvtTAQL4BrO9iHjl3y8OA19At2lH255A_6NsU1oki2VJWPzdZTLjDYHZtng3YATnc-wd3rFrGXVYFZAIjLdwBpV450ts-axhwssafEbm247MPuBUsCPNREz-NURfdEErt8hzTBIKbo_FoTlYkt-OQ8jMuU6VealOACgvxlLr4BXdN_1iq9OuQ_JxbnvoH1ekRMBuBmrbapAyGmcP_qmHOVbPFErQtVzrv5D_po2LOaxAp2Szk2oiU2KpiV4ffSD1GGvvey3R-sUzh7vI-sPJq1vkpufEg4bmzqA"
         self.test_results = {}
     

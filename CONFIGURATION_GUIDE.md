@@ -233,11 +233,13 @@ You can override individual endpoints using:
 
 ## Security Considerations
 
-1. **Never hard-code credentials** in configuration files
-2. **Use environment variables** for sensitive information
-3. **Use secure authentication methods** (SASL_SSL, TLS)
-4. **Verify SSL certificates** in production environments
-5. **Use least-privilege access** for service accounts
+1. **NEVER hard-code credentials in Python files** - This makes the system unusable for general deployment
+2. **NEVER hard-code credentials in configuration files** - Use environment variables or placeholders
+3. **Use environment variables for sensitive information** - All credentials must come from configuration
+4. **Use secure authentication methods** (SASL_SSL, TLS)
+5. **Verify SSL certificates** in production environments
+6. **Use least-privilege access** for service accounts
+7. **Validate configuration at startup** - Ensure all required credentials are provided
 
 ## Troubleshooting
 

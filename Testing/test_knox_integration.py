@@ -351,8 +351,8 @@ class KnoxIntegrationTester:
             print("3. Check authentication credentials")
             print("4. Review Knox Gateway logs")
             print("\n📋 Manual Configuration Required:")
-            print("   Access: https://irb-kakfa-only-master0.cgsi-dem.prep-j1tk.a3.cloudera.site/irb-kakfa-only/manager/admin-ui/")
-            print("   Login: ibrooks / Admin12345#")
+            print(f"   Access: {os.getenv('KNOX_ADMIN_UI', 'https://your-knox-gateway.example.com:8443/gateway/manager/admin-ui/')}")
+            print(f"   Login: {os.getenv('KNOX_USERNAME', 'your-username')} / {os.getenv('KNOX_PASSWORD', 'your-password')}")
             print("   Configure: cdp-proxy topology with Kafka services")
             return self.test_results
         

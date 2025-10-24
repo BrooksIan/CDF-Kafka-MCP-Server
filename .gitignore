@@ -53,6 +53,7 @@ config/*.json
 .env
 .env.local
 .env.*.local
+config/env_current.txt
 
 # Temporary files
 tmp/

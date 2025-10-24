@@ -52,8 +52,8 @@ class CDPKafkaClient:
         # Initialize CDP REST client
         self.cdp_client = CDPRestClient(
             base_url=self.kafka_config.bootstrap_servers[0].split(':')[0] + ':' + str(self.kafka_config.bootstrap_servers[0].split(':')[1]),
-            username=getattr(self.kafka_config, 'sasl_username', 'ibrooks'),
-            password=getattr(self.kafka_config, 'sasl_password', 'Admin12345#'),
+            username=getattr(self.kafka_config, 'sasl_username', None),
+            password=getattr(self.kafka_config, 'sasl_password', None),
             cluster_id=getattr(self.kafka_config, 'cluster_id', None),
             verify_ssl=getattr(self.kafka_config, 'verify_ssl', False)
         )

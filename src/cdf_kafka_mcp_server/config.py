@@ -3,12 +3,30 @@ Configuration management for CDF Kafka MCP Server.
 """
 
 import os
+import re
 from pathlib import Path
-from typing import Optional, List, Union, Dict
+from typing import Optional, List, Union, Dict, Any
 
 import yaml
 from pydantic import BaseModel, field_validator, Field
 from dotenv import load_dotenv
+
+
+def substitute_variables(data: Any) -> Any:
+    """Substitute environment variables in configuration data."""
+    if isinstance(data, str):
+        # Replace ${VAR} with environment variable values
+        def replace_var(match):
+            var_name = match.group(1)
+            return os.getenv(var_name, match.group(0))
+        
+        return re.sub(r'\$\{([^}]+)\}', replace_var, data)
+    elif isinstance(data, dict):
+        return {key: substitute_variables(value) for key, value in data.items()}
+    elif isinstance(data, list):
+        return [substitute_variables(item) for item in data]
+    else:
+        return data
 
 
 class KnoxConfig(BaseModel):
@@ -278,6 +296,9 @@ def load_config(config_path: Optional[str] = None) -> Config:
 
     if env_config['log_level']:
         config_data['log_level'] = env_config['log_level']
+
+    # Substitute environment variables in the configuration
+    config_data = substitute_variables(config_data)
 
     # Remove None values from configs
     for section in ['knox', 'cdp', 'cdp_rest']:

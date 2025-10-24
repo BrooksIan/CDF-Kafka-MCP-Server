@@ -18,9 +18,9 @@ def add_value_to_topic():
     print("=" * 50)
     
     # Configuration
-    base_url = "https://irb-kakfa-only-master0.cgsi-dem.prep-j1tk.a3.cloudera.site:443"
-    username = "ibrooks"
-    password = "Admin12345#"
+    base_url = os.getenv("CDP_REST_BASE_URL", "https://your-cdp-cluster.example.com:443")
+    username = os.getenv("CDP_REST_USERNAME", "your-username")
+    password = os.getenv("CDP_REST_PASSWORD", "your-password")
     cluster_id = "irb-kakfa-only"
     topic_name = "mcptesttopic"
     

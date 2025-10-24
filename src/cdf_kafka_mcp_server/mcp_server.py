@@ -78,11 +78,20 @@ class CDFKafkaMCPServer:
                 if hasattr(self.config, 'cdp_rest') and hasattr(self.config.cdp_rest, 'endpoints'):
                     custom_endpoints = self.config.cdp_rest.endpoints
                 
+                # Get credentials from configuration - no hard-coded defaults
+                username = getattr(self.config.kafka, 'sasl_username', None)
+                password = getattr(self.config.kafka, 'sasl_password', None)
+                cluster_id = getattr(self.config.kafka, 'cluster_id', None)
+                
+                if not username or not password:
+                    self.logger.warning("Kafka credentials not configured - CDP REST client will not be initialized")
+                    return
+                
                 self.cdp_rest_client = CDPRestClient(
                     base_url=base_url,
-                    username=getattr(self.config.kafka, 'sasl_username', 'ibrooks'),
-                    password=getattr(self.config.kafka, 'sasl_password', 'Admin12345#'),
-                    cluster_id=getattr(self.config.kafka, 'cluster_id', 'irb-kakfa-only'),
+                    username=username,
+                    password=password,
+                    cluster_id=cluster_id,
                     verify_ssl=getattr(self.config.kafka, 'verify_ssl', False),
                     token=getattr(self.config.knox, 'token', None),
                     auth_method=getattr(self.config.kafka, 'auth_method', None),
