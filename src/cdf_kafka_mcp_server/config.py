@@ -110,12 +110,27 @@ class KafkaConfig(BaseModel):
         return v
 
 
+class CDPRestConfig(BaseModel):
+    """CDP REST API configuration."""
+    
+    base_url: str = Field(..., description="CDP REST API base URL")
+    username: str = Field(..., description="Username for CDP REST authentication")
+    password: str = Field(..., description="Password for CDP REST authentication")
+    cluster_id: str = Field(..., description="CDP cluster ID")
+    endpoints: Optional[Dict[str, str]] = Field(None, description="Custom endpoint URLs")
+    timeout: int = Field(30, description="Request timeout in seconds")
+    retry_attempts: int = Field(3, description="Number of retry attempts")
+    retry_delay: int = Field(1, description="Delay between retries in seconds")
+
+
 class Config(BaseModel):
     """Main configuration class."""
 
     kafka: KafkaConfig = Field(..., description="Kafka configuration")
     knox: Optional[KnoxConfig] = Field(None, description="Knox configuration")
     cdp: Optional[CDPConfig] = Field(None, description="CDP Cloud configuration")
+    cdp_rest: Optional[CDPRestConfig] = Field(None, description="CDP REST API configuration")
+    target_base_url: Optional[str] = Field(None, description="Configurable target base URL")
     log_level: str = Field("INFO", description="Log level")
 
     @field_validator('log_level')
@@ -153,7 +168,19 @@ def load_config(config_path: Optional[str] = None) -> Config:
     # Load from file if provided
     if config_path and Path(config_path).exists():
         with open(config_path, 'r') as f:
-            config_data = yaml.safe_load(f)
+            content = f.read()
+            
+        # Handle variable substitution for target_base_url
+        if 'target_base_url' in content:
+            # Extract target_base_url from the content
+            import re
+            target_base_url_match = re.search(r'target_base_url:\s*["\']([^"\']+)["\']', content)
+            if target_base_url_match:
+                target_base_url = target_base_url_match.group(1)
+                # Replace ${target_base_url} with the actual value
+                content = content.replace('${target_base_url}', target_base_url)
+            
+        config_data = yaml.safe_load(content)
 
     # Override with environment variables
     env_config = {

@@ -19,7 +19,8 @@ class CDPRestClient:
     
     def __init__(self, base_url: str, username: str, password: str, 
                  cluster_id: str = None, verify_ssl: bool = False, 
-                 token: str = None, auth_method: str = None):
+                 token: str = None, auth_method: str = None, 
+                 custom_endpoints: Dict[str, str] = None):
         """
         Initialize CDP REST API client.
         
@@ -31,6 +32,7 @@ class CDPRestClient:
             verify_ssl: Whether to verify SSL certificates
             token: Authentication token (optional)
             auth_method: Authentication method (optional)
+            custom_endpoints: Custom endpoint URLs (optional)
         """
         self.base_url = base_url.rstrip('/')
         self.username = username
@@ -42,14 +44,17 @@ class CDPRestClient:
         # Initialize authentication
         self.authenticator = self._setup_authentication(token, auth_method)
         
-        # API endpoints
-        self.endpoints = {
-            'kafka_rest': f"{self.base_url}/irb-kakfa-only/cdp-proxy/kafka-rest",
-            'kafka_connect': f"{self.base_url}/irb-kakfa-only/cdp-proxy/kafka-connect",
-            'kafka_topics': f"{self.base_url}/irb-kakfa-only/cdp-proxy/kafka-topics",
-            'smm_api': f"{self.base_url}/irb-kakfa-only/cdp-proxy/smm-api",
-            'cdp_api': f"{self.base_url}/irb-kakfa-only/cdp-proxy-api"
-        }
+        # API endpoints - use custom endpoints if provided, otherwise use defaults
+        if custom_endpoints:
+            self.endpoints = custom_endpoints
+        else:
+            self.endpoints = {
+                'kafka_rest': f"{self.base_url}/irb-kakfa-only/cdp-proxy/kafka-rest",
+                'kafka_connect': f"{self.base_url}/irb-kakfa-only/cdp-proxy-token/kafka-connect",
+                'kafka_topics': f"{self.base_url}/irb-kakfa-only/cdp-proxy/kafka-topics",
+                'smm_api': f"{self.base_url}/irb-kakfa-only/cdp-proxy/smm-api",
+                'cdp_api': f"{self.base_url}/irb-kakfa-only/cdp-proxy-api"
+            }
         
         logger.info(f"CDP REST client initialized for {self.base_url}")
     
@@ -436,6 +441,89 @@ class CDPRestClient:
         except Exception as e:
             logger.error(f"Failed to refresh authentication: {e}")
             return False
+    
+    def get_knox_token(self) -> str:
+        """Get Knox token for Kafka Connect authentication."""
+        try:
+            # Try to get token from Knox gateway
+            token_url = f"{self.base_url}/irb-kakfa-only/cdp-proxy-token/gateway/admin/api/v1/topologies"
+            response = self.session.get(token_url, auth=(self.username, self.password), verify=self.verify_ssl)
+            
+            if response.status_code == 200:
+                # Extract token from response (this might need adjustment based on actual response format)
+                data = response.json()
+                if isinstance(data, dict) and 'token' in data:
+                    return data['token']
+                elif isinstance(data, list) and len(data) > 0:
+                    # Try to extract token from topology data
+                    topology = data[0]
+                    if isinstance(topology, dict) and 'token' in topology:
+                        return topology['token']
+            
+            # If no token found, return a placeholder for now
+            return "knox-token-placeholder"
+            
+        except Exception as e:
+            logger.warning(f"Failed to get Knox token: {e}")
+            return "knox-token-placeholder"
+    
+    def list_connectors(self) -> List[Dict[str, Any]]:
+        """List Kafka Connect connectors using Knox token authentication."""
+        try:
+            # Get Knox token
+            token = self.get_knox_token()
+            
+            # Prepare headers with token authentication
+            headers = {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            }
+            
+            # Try different authentication methods
+            auth_methods = [
+                # Method 1: Bearer token
+                {'Authorization': f'Bearer {token}'},
+                # Method 2: Basic auth with token
+                {'Authorization': f'Basic {token}'},
+                # Method 3: Custom header
+                {'X-Auth-Token': token},
+                # Method 4: Knox-specific header
+                {'X-Knox-Token': token}
+            ]
+            
+            for auth_headers in auth_methods:
+                try:
+                    headers.update(auth_headers)
+                    response = self._make_request('GET', f"{self.endpoints['kafka_connect']}/connectors", headers=headers)
+                    
+                    if response.status_code == 200:
+                        data = response.json()
+                        if isinstance(data, list):
+                            return data
+                        elif isinstance(data, dict) and 'connectors' in data:
+                            return data['connectors']
+                        else:
+                            return [data] if data else []
+                    elif response.status_code != 401:
+                        logger.warning(f"Unexpected status code {response.status_code} for connectors: {response.text}")
+                        
+                except Exception as e:
+                    logger.debug(f"Auth method failed: {e}")
+                    continue
+            
+            # If all auth methods failed, try with basic auth as fallback
+            response = self._make_request('GET', f"{self.endpoints['kafka_connect']}/connectors", 
+                                        auth=(self.username, self.password))
+            
+            if response.status_code == 200:
+                data = response.json()
+                return data if isinstance(data, list) else [data] if data else []
+            
+            return []
+            
+        except Exception as e:
+            logger.error(f"Failed to list connectors: {e}")
+            return []
     
     # ==================== UTILITY METHODS ====================
     

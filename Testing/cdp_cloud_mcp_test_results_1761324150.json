@@ -1,0 +1,343 @@
+{
+  "Connection Tools": {
+    "test_connection": {
+      "success": true,
+      "message": "Successfully connected to CDP with authentication",
+      "method": "cdp_rest_api",
+      "data": {
+        "connected": true,
+        "message": "Successfully connected to CDP with authentication",
+        "method": "cdp_rest_api"
+      }
+    },
+    "get_health_status": {
+      "success": true,
+      "status": "unknown",
+      "data": {
+        "health_status": {
+          "service_name": "cdf-kafka-mcp-server",
+          "overall_status": "unhealthy",
+          "checks": [
+            {
+              "name": "mcp_server",
+              "status": "healthy",
+              "message": "MCP server is running (uptime: 0.2s)",
+              "timestamp": "2025-10-24T12:42:28.534929",
+              "response_time_ms": 0.008821487426757812,
+              "details": {
+                "uptime_seconds": 0.206165
+              }
+            },
+            {
+              "name": "kafka_connectivity",
+              "status": "unhealthy",
+              "message": "Kafka client not available",
+              "timestamp": "2025-10-24T12:42:28.534938",
+              "response_time_ms": null,
+              "details": null
+            },
+            {
+              "name": "knox_gateway",
+              "status": "degraded",
+              "message": "Knox Gateway is accessible but returned no info",
+              "timestamp": "2025-10-24T12:42:28.626199",
+              "response_time_ms": 91.25494956970215,
+              "details": null
+            },
+            {
+              "name": "cdp_cloud",
+              "status": "unhealthy",
+              "message": "CDP Cloud is not accessible",
+              "timestamp": "2025-10-24T12:42:28.751011",
+              "response_time_ms": 124.8011589050293,
+              "details": null
+            },
+            {
+              "name": "topic_operations",
+              "status": "unhealthy",
+              "message": "Kafka client not available for topic operations",
+              "timestamp": "2025-10-24T12:42:28.751020",
+              "response_time_ms": null,
+              "details": null
+            },
+            {
+              "name": "connect_operations",
+              "status": "unhealthy",
+              "message": "Kafka client not available for Connect operations",
+              "timestamp": "2025-10-24T12:42:28.751023",
+              "response_time_ms": null,
+              "details": null
+            }
+          ],
+          "last_updated": "2025-10-24T12:42:28.751032",
+          "uptime_seconds": 0.422282
+        },
+        "message": "Health status retrieved successfully"
+      }
+    }
+  },
+  "Topic Tools": {
+    "list_topics": {
+      "success": false,
+      "topics": [],
+      "count": 0,
+      "method": "none",
+      "data": {
+        "topics": [],
+        "count": 0,
+        "method": "none",
+        "error": "No available client"
+      }
+    },
+    "create_topic": {
+      "success": false,
+      "topic": "mcp-test-topic-1761324148",
+      "data": {
+        "error": "'NoneType' object has no attribute 'create_topic'"
+      }
+    },
+    "get_topic_info": {
+      "success": false,
+      "data": {
+        "error": "Unknown tool: get_topic_info"
+      }
+    }
+  },
+  "Message Tools": {
+    "produce_message": {
+      "success": false,
+      "data": {
+        "error": "No available client for message production",
+        "topic": "mcptesttopic",
+        "method": "none"
+      }
+    },
+    "consume_messages": {
+      "success": false,
+      "messages": [],
+      "count": 0,
+      "data": {
+        "error": "'NoneType' object has no attribute 'consume_messages'"
+      }
+    }
+  },
+  "Connector Tools": {
+    "list_connectors": {
+      "success": true,
+      "connectors": [],
+      "count": 0,
+      "data": {
+        "connectors": [],
+        "count": 0,
+        "method": "cdp_rest_api"
+      }
+    },
+    "get_connector_status": {
+      "success": false,
+      "data": {
+        "error": "'name'"
+      }
+    }
+  },
+  "Authentication Tools": {
+    "test_authentication": {
+      "success": true,
+      "method": "basic",
+      "data": {
+        "authenticated": true,
+        "status_code": 200,
+        "method": "basic",
+        "token_type": "Basic",
+        "expires_at": null
+      }
+    },
+    "discover_auth_endpoints": {
+      "success": true,
+      "endpoints": {},
+      "data": {
+        "oauth2_token": {
+          "endpoint": "https://irb-kakfa-only-master0.cgsi-dem.prep-j1tk.a3.cloudera.site:443/oauth2/token",
+          "status_code": 404,
+          "available": true,
+          "content_type": "",
+          "response_size": 0
+        },
+        "knox_token": {
+          "endpoint": "https://irb-kakfa-only-master0.cgsi-dem.prep-j1tk.a3.cloudera.site:443/irb-kakfa-only/cdp-proxy-token/knox-token",
+          "status_code": 404,
+          "available": true,
+          "content_type": "",
+          "response_size": 0
+        },
+        "saml_sso": {
+          "endpoint": "https://irb-kakfa-only-master0.cgsi-dem.prep-j1tk.a3.cloudera.site:443/irb-kakfa-only/cdp-proxy/saml/sso",
+          "status_code": 404,
+          "available": true,
+          "content_type": "",
+          "response_size": 0
+        },
+        "kerberos_tgt": {
+          "endpoint": "https://irb-kakfa-only-master0.cgsi-dem.prep-j1tk.a3.cloudera.site:443/irb-kakfa-only/cdp-proxy/kerberos/tgt",
+          "status_code": 404,
+          "available": true,
+          "content_type": "",
+          "response_size": 0
+        },
+        "basic_auth": {
+          "endpoint": "https://irb-kakfa-only-master0.cgsi-dem.prep-j1tk.a3.cloudera.site:443/irb-kakfa-only/cdp-proxy/auth/basic",
+          "status_code": 404,
+          "available": true,
+          "content_type": "",
+          "response_size": 0
+        },
+        "cdp_auth": {
+          "endpoint": "https://irb-kakfa-only-master0.cgsi-dem.prep-j1tk.a3.cloudera.site:443/irb-kakfa-only/cdp-proxy-api/auth",
+          "status_code": 404,
+          "available": true,
+          "content_type": "",
+          "response_size": 0
+        },
+        "cdp_token": {
+          "endpoint": "https://irb-kakfa-only-master0.cgsi-dem.prep-j1tk.a3.cloudera.site:443/irb-kakfa-only/cdp-proxy-api/token",
+          "status_code": 404,
+          "available": true,
+          "content_type": "",
+          "response_size": 0
+        }
+      }
+    }
+  },
+  "CDP-Specific Tools": {
+    "get_cdp_clusters": {
+      "success": false,
+      "clusters": [],
+      "count": 0,
+      "data": {
+        "error": "Unknown tool: get_cdp_clusters"
+      }
+    },
+    "get_cdp_apis": {
+      "success": true,
+      "apis": {
+        "cdp_proxy_api": {
+          "url": "https://irb-kakfa-only-master0.cgsi-dem.prep-j1tk.a3.cloudera.site:443/cdp-proxy-api",
+          "kafka_connect": "https://irb-kakfa-only-master0.cgsi-dem.prep-j1tk.a3.cloudera.site:443/cdp-proxy-api/kafka-connect",
+          "available": false,
+          "status_code": 404
+        },
+        "cdp_proxy_token": {
+          "url": "https://irb-kakfa-only-master0.cgsi-dem.prep-j1tk.a3.cloudera.site:443/cdp-proxy-token",
+          "kafka_connect": "https://irb-kakfa-only-master0.cgsi-dem.prep-j1tk.a3.cloudera.site:443/cdp-proxy-token/kafka-connect",
+          "available": false,
+          "status_code": 404
+        }
+      },
+      "count": 0,
+      "data": {
+        "apis": {
+          "cdp_proxy_api": {
+            "url": "https://irb-kakfa-only-master0.cgsi-dem.prep-j1tk.a3.cloudera.site:443/cdp-proxy-api",
+            "kafka_connect": "https://irb-kakfa-only-master0.cgsi-dem.prep-j1tk.a3.cloudera.site:443/cdp-proxy-api/kafka-connect",
+            "available": false,
+            "status_code": 404
+          },
+          "cdp_proxy_token": {
+            "url": "https://irb-kakfa-only-master0.cgsi-dem.prep-j1tk.a3.cloudera.site:443/cdp-proxy-token",
+            "kafka_connect": "https://irb-kakfa-only-master0.cgsi-dem.prep-j1tk.a3.cloudera.site:443/cdp-proxy-token/kafka-connect",
+            "available": false,
+            "status_code": 404
+          }
+        },
+        "message": "Successfully retrieved CDP API information"
+      }
+    },
+    "get_cdp_service_health": {
+      "success": true,
+      "services": {},
+      "data": {
+        "health": {
+          "cdp_connection": false,
+          "apis": {
+            "cdp_proxy_api": {
+              "url": "https://irb-kakfa-only-master0.cgsi-dem.prep-j1tk.a3.cloudera.site:443/cdp-proxy-api",
+              "kafka_connect": "https://irb-kakfa-only-master0.cgsi-dem.prep-j1tk.a3.cloudera.site:443/cdp-proxy-api/kafka-connect",
+              "available": false,
+              "status_code": 404
+            },
+            "cdp_proxy_token": {
+              "url": "https://irb-kakfa-only-master0.cgsi-dem.prep-j1tk.a3.cloudera.site:443/cdp-proxy-token",
+              "kafka_connect": "https://irb-kakfa-only-master0.cgsi-dem.prep-j1tk.a3.cloudera.site:443/cdp-proxy-token/kafka-connect",
+              "available": false,
+              "status_code": 404
+            }
+          },
+          "connectors": {
+            "available": true,
+            "count": 0
+          },
+          "overall_health": "unhealthy"
+        },
+        "message": "Successfully retrieved CDP service health"
+      }
+    }
+  },
+  "Monitoring Tools": {
+    "get_service_metrics": {
+      "success": true,
+      "metrics": {},
+      "data": {
+        "health_metrics": {
+          "uptime_seconds": 2.556215,
+          "total_health_checks": 1,
+          "average_response_times": {
+            "mcp_server": {
+              "average_ms": 0.008821487426757812,
+              "min_ms": 0.008821487426757812,
+              "max_ms": 0.008821487426757812,
+              "count": 1
+            },
+            "knox_gateway": {
+              "average_ms": 91.25494956970215,
+              "min_ms": 91.25494956970215,
+              "max_ms": 91.25494956970215,
+              "count": 1
+            },
+            "cdp_cloud": {
+              "average_ms": 124.8011589050293,
+              "min_ms": 124.8011589050293,
+              "max_ms": 124.8011589050293,
+              "count": 1
+            }
+          },
+          "current_status": "unhealthy"
+        },
+        "performance_metrics": {
+          "uptime_seconds": 2.556217,
+          "requests_total": 0,
+          "requests_successful": 0,
+          "requests_failed": 0,
+          "success_rate_percent": 0,
+          "average_response_time_ms": 0,
+          "tool_usage": {},
+          "recent_errors": [],
+          "total_errors": 0
+        },
+        "message": "Service metrics retrieved successfully"
+      }
+    },
+    "run_health_check": {
+      "success": false,
+      "status": "unknown",
+      "data": {
+        "error": "'check_name'"
+      }
+    }
+  },
+  "summary": {
+    "total_tests": 16,
+    "passed_tests": 8,
+    "failed_tests": 8,
+    "success_rate": 50.0,
+    "duration": 11.082958936691284
+  }
+}

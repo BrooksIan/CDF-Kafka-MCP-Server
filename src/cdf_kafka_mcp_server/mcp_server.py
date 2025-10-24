@@ -73,6 +73,11 @@ class CDFKafkaMCPServer:
                 else:
                     base_url = f"https://{bootstrap_server}"
                 
+                # Get custom endpoints from configuration if available
+                custom_endpoints = None
+                if hasattr(self.config, 'cdp_rest') and hasattr(self.config.cdp_rest, 'endpoints'):
+                    custom_endpoints = self.config.cdp_rest.endpoints
+                
                 self.cdp_rest_client = CDPRestClient(
                     base_url=base_url,
                     username=getattr(self.config.kafka, 'sasl_username', 'ibrooks'),
@@ -80,7 +85,8 @@ class CDFKafkaMCPServer:
                     cluster_id=getattr(self.config.kafka, 'cluster_id', 'irb-kakfa-only'),
                     verify_ssl=getattr(self.config.kafka, 'verify_ssl', False),
                     token=getattr(self.config.knox, 'token', None),
-                    auth_method=getattr(self.config.kafka, 'auth_method', None)
+                    auth_method=getattr(self.config.kafka, 'auth_method', None),
+                    custom_endpoints=custom_endpoints
                 )
                 self.cdp_kafka_client = CDPKafkaClient(self.config)
                 self.logger.info("CDP REST client initialized successfully")
@@ -631,18 +637,38 @@ class CDFKafkaMCPServer:
                         "required": []
                     }
                 ),
-                Tool(
-                    name="run_health_check",
-                    description="Run a specific health check",
-                    inputSchema={
-                        "type": "object",
-                        "properties": {
-                            "check_name": {"type": "string", "description": "Name of the health check to run", 
-                                         "enum": ["kafka", "knox", "cdp", "mcp_server", "topics", "connect"]}
-                        },
-                        "required": ["check_name"]
-                    }
-                ),
+            Tool(
+                name="run_health_check",
+                description="Run a specific health check",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "check_name": {"type": "string", "description": "Name of the health check to run", 
+                                     "enum": ["kafka", "knox", "cdp", "mcp_server", "topics", "connect"]}
+                    },
+                    "required": ["check_name"]
+                }
+            ),
+            Tool(
+                name="get_topic_info",
+                description="Get detailed information about a topic (alias for describe_topic)",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "name": {"type": "string", "description": "Topic name"}
+                    },
+                    "required": ["name"]
+                }
+            ),
+            Tool(
+                name="get_cdp_clusters",
+                description="Get information about CDP clusters",
+                inputSchema={
+                    "type": "object",
+                    "properties": {},
+                    "required": []
+                }
+            ),
             ])
 
         return ListToolsResult(tools=tools)
@@ -1200,8 +1226,37 @@ class CDFKafkaMCPServer:
 
     async def _handle_list_connectors(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """Handle list_connectors tool."""
-        connectors = self.kafka_client.list_connectors()
-        return {"connectors": connectors, "count": len(connectors)}
+        # Try CDP REST client first
+        cdp_rest_client = self._get_cdp_rest_client()
+        if cdp_rest_client:
+            try:
+                connectors = cdp_rest_client.list_connectors()
+                return {
+                    "connectors": connectors,
+                    "count": len(connectors),
+                    "method": "cdp_rest_api"
+                }
+            except Exception as e:
+                self.logger.warning(f"CDP REST client list_connectors failed: {e}")
+        
+        # Fallback to Kafka client
+        if self.kafka_client:
+            try:
+                connectors = self.kafka_client.list_connectors()
+                return {
+                    "connectors": connectors,
+                    "count": len(connectors),
+                    "method": "kafka_client"
+                }
+            except Exception as e:
+                self.logger.warning(f"Kafka client list_connectors failed: {e}")
+        
+        return {
+            "connectors": [],
+            "count": 0,
+            "method": "none",
+            "error": "No available client for connector listing"
+        }
 
     async def _handle_create_connector(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """Handle create_connector tool."""
