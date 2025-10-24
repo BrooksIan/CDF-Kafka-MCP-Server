@@ -204,12 +204,12 @@ class KafkaClient:
 
                 return list(topics)
             else:
-                # Fallback: return known topics
-                return ['cursortest', 'mcp-comprehensive-test']
+                # Fallback: return empty list if Connect API fails
+                return []
 
         except Exception as e:
-            # Ultimate fallback: return known topics
-            return ['cursortest', 'mcp-comprehensive-test']
+            # Ultimate fallback: return empty list
+            return []
 
     def _create_topic_via_connect(self, topic_name: str) -> None:
         """Create topic using Kafka Connect API as fallback."""
@@ -271,42 +271,20 @@ class KafkaClient:
 
     def list_topics(self) -> List[str]:
         """List all topics."""
-        if self.admin_client is None:
-            # Fallback: use Kafka Connect API to get topics
-            try:
-                return self._list_topics_via_connect()
-            except Exception as e:
-                raise Exception(f"Failed to list topics (no admin client): {e}")
-
+        # Always use Connect API for CDP Cloud
         try:
-            metadata = self.admin_client.list_topics()
-            return list(metadata.topics.keys())
-        except KafkaError as e:
-            raise Exception(f"Failed to list topics: {e}")
+            return self._list_topics_via_connect()
+        except Exception as e:
+            raise Exception(f"Failed to list topics via Connect API: {e}")
 
     def create_topic(self, name: str, partitions: int = 1, replication_factor: int = 1,
                     config: Optional[Dict[str, str]] = None) -> None:
         """Create a new topic."""
-        if self.admin_client is None:
-            # Fallback: use Kafka Connect to create topic via connector
-            try:
-                self._create_topic_via_connect(name)
-                return
-            except Exception as e:
-                raise Exception(f"Failed to create topic {name} (no admin client): {e}")
-
+        # Always use Connect API for CDP Cloud
         try:
-            topic = NewTopic(
-                name=name,
-                num_partitions=partitions,
-                replication_factor=replication_factor,
-                topic_configs=config or {}
-            )
-            self.admin_client.create_topics([topic])
-        except TopicAlreadyExistsError:
-            raise Exception(f"Topic '{name}' already exists")
-        except KafkaError as e:
-            raise Exception(f"Failed to create topic '{name}': {e}")
+            self._create_topic_via_connect(name)
+        except Exception as e:
+            raise Exception(f"Failed to create topic {name} via Connect API: {e}")
 
     def _describe_topic_via_fallback(self, name: str) -> TopicInfo:
         """Fallback method to describe topic when admin_client is not available."""
