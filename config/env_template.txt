@@ -1,0 +1,53 @@
+# Environment Variables Template for CDF Kafka MCP Server
+# Copy this file to .env and customize for your environment
+
+# Kafka Configuration
+KAFKA_BOOTSTRAP_SERVERS=your-kafka-cluster.example.com:9092
+KAFKA_CLIENT_ID=cdf-kafka-mcp-server
+KAFKA_SECURITY_PROTOCOL=SASL_SSL
+KAFKA_SASL_MECHANISM=PLAIN
+KAFKA_SASL_USERNAME=your-username
+KAFKA_SASL_PASSWORD=your-password
+KAFKA_VERIFY_SSL=true
+KAFKA_CLUSTER_ID=your-cluster-id
+KAFKA_REQUEST_TIMEOUT_MS=30000
+KAFKA_RETRY_BACKOFF_MS=1000
+KAFKA_MAX_RETRY_ATTEMPTS=3
+KAFKA_AUTH_METHOD=basic
+
+# Knox Gateway Configuration (optional)
+KNOX_GATEWAY=https://your-knox-gateway.example.com:8443/gateway
+KNOX_USERNAME=your-username
+KNOX_PASSWORD=your-password
+KNOX_VERIFY_SSL=true
+KNOX_SERVICE=kafka
+
+# CDP Cloud Configuration (optional)
+CDP_URL=https://your-cdp-cluster.example.com:443
+CDP_USERNAME=your-username
+CDP_PASSWORD=your-password
+CDP_TOKEN=your-cdp-token
+
+# CDP REST API Configuration (optional)
+CDP_REST_BASE_URL=https://your-cdp-cluster.example.com:443
+CDP_REST_USERNAME=your-username
+CDP_REST_PASSWORD=your-password
+CDP_REST_CLUSTER_ID=your-cluster-id
+CDP_REST_TIMEOUT=30
+CDP_REST_RETRY_ATTEMPTS=3
+CDP_REST_RETRY_DELAY=1
+
+# Individual Endpoint Configurations (optional)
+# If not provided, will use base URLs + default paths
+KAFKA_CONNECT_ENDPOINT=https://your-cdp-cluster.example.com:443/your-cluster/cdp-proxy-token/kafka-connect
+KAFKA_REST_ENDPOINT=https://your-cdp-cluster.example.com:443/your-cluster/cdp-proxy/kafka-rest
+KAFKA_TOPICS_ENDPOINT=https://your-cdp-cluster.example.com:443/your-cluster/cdp-proxy/kafka-topics
+SMM_API_ENDPOINT=https://your-cdp-cluster.example.com:443/your-cluster/cdp-proxy/smm-api
+ADMIN_API_ENDPOINT=https://your-cdp-cluster.example.com:443/your-cluster/cdp-proxy/admin
+CDP_API_ENDPOINT=https://your-cdp-cluster.example.com:443/your-cluster/cdp-proxy-api
+
+# Target Base URL for environment-specific configurations
+TARGET_BASE_URL=https://your-cdp-cluster.example.com:443/your-cluster/cdp-proxy-token
+
+# Logging Configuration
+MCP_LOG_LEVEL=INFO

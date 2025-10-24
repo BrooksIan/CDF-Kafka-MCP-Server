@@ -121,6 +121,12 @@ class CDPRestConfig(BaseModel):
     timeout: int = Field(30, description="Request timeout in seconds")
     retry_attempts: int = Field(3, description="Number of retry attempts")
     retry_delay: int = Field(1, description="Delay between retries in seconds")
+    kafka_connect_endpoint: Optional[str] = Field(None, description="Kafka Connect API endpoint")
+    kafka_rest_endpoint: Optional[str] = Field(None, description="Kafka REST API endpoint")
+    kafka_topics_endpoint: Optional[str] = Field(None, description="Kafka Topics API endpoint")
+    smm_api_endpoint: Optional[str] = Field(None, description="SMM API endpoint")
+    admin_api_endpoint: Optional[str] = Field(None, description="Admin API endpoint")
+    cdp_api_endpoint: Optional[str] = Field(None, description="CDP API endpoint")
 
 
 class Config(BaseModel):
@@ -196,6 +202,12 @@ def load_config(config_path: Optional[str] = None) -> Config:
             'tls_cert': os.getenv('KAFKA_TLS_CERT'),
             'tls_key': os.getenv('KAFKA_TLS_KEY'),
             'timeout': int(os.getenv('KAFKA_TIMEOUT', '30')),
+            'verify_ssl': os.getenv('KAFKA_VERIFY_SSL', 'true').lower() == 'true',
+            'cluster_id': os.getenv('KAFKA_CLUSTER_ID'),
+            'request_timeout_ms': int(os.getenv('KAFKA_REQUEST_TIMEOUT_MS', '30000')),
+            'retry_backoff_ms': int(os.getenv('KAFKA_RETRY_BACKOFF_MS', '1000')),
+            'max_retry_attempts': int(os.getenv('KAFKA_MAX_RETRY_ATTEMPTS', '3')),
+            'auth_method': os.getenv('KAFKA_AUTH_METHOD'),
         },
         'knox': {
             'gateway': os.getenv('KNOX_GATEWAY'),
@@ -206,12 +218,36 @@ def load_config(config_path: Optional[str] = None) -> Config:
             'ca_bundle': os.getenv('KNOX_CA_BUNDLE'),
             'service': os.getenv('KNOX_SERVICE', 'kafka'),
         },
+        'cdp': {
+            'url': os.getenv('CDP_URL'),
+            'username': os.getenv('CDP_USERNAME'),
+            'password': os.getenv('CDP_PASSWORD'),
+            'token': os.getenv('CDP_TOKEN'),
+        },
+        'cdp_rest': {
+            'base_url': os.getenv('CDP_REST_BASE_URL'),
+            'username': os.getenv('CDP_REST_USERNAME'),
+            'password': os.getenv('CDP_REST_PASSWORD'),
+            'cluster_id': os.getenv('CDP_REST_CLUSTER_ID'),
+            'timeout': int(os.getenv('CDP_REST_TIMEOUT', '30')),
+            'retry_attempts': int(os.getenv('CDP_REST_RETRY_ATTEMPTS', '3')),
+            'retry_delay': int(os.getenv('CDP_REST_RETRY_DELAY', '1')),
+            'kafka_connect_endpoint': os.getenv('KAFKA_CONNECT_ENDPOINT'),
+            'kafka_rest_endpoint': os.getenv('KAFKA_REST_ENDPOINT'),
+            'kafka_topics_endpoint': os.getenv('KAFKA_TOPICS_ENDPOINT'),
+            'smm_api_endpoint': os.getenv('SMM_API_ENDPOINT'),
+            'admin_api_endpoint': os.getenv('ADMIN_API_ENDPOINT'),
+            'cdp_api_endpoint': os.getenv('CDP_API_ENDPOINT'),
+        },
+        'target_base_url': os.getenv('TARGET_BASE_URL'),
         'log_level': os.getenv('MCP_LOG_LEVEL', 'INFO'),
     }
 
     # Filter out None values
     env_config['kafka'] = {k: v for k, v in env_config['kafka'].items() if v is not None}
     env_config['knox'] = {k: v for k, v in env_config['knox'].items() if v is not None}
+    env_config['cdp'] = {k: v for k, v in env_config['cdp'].items() if v is not None}
+    env_config['cdp_rest'] = {k: v for k, v in env_config['cdp_rest'].items() if v is not None}
 
     # Merge configurations
     if 'kafka' in config_data:
@@ -225,14 +261,30 @@ def load_config(config_path: Optional[str] = None) -> Config:
         else:
             config_data['knox'] = env_config['knox']
 
+    if env_config['cdp'].get('url'):
+        if 'cdp' in config_data:
+            config_data['cdp'].update(env_config['cdp'])
+        else:
+            config_data['cdp'] = env_config['cdp']
+
+    if env_config['cdp_rest'].get('base_url'):
+        if 'cdp_rest' in config_data:
+            config_data['cdp_rest'].update(env_config['cdp_rest'])
+        else:
+            config_data['cdp_rest'] = env_config['cdp_rest']
+
+    if env_config['target_base_url']:
+        config_data['target_base_url'] = env_config['target_base_url']
+
     if env_config['log_level']:
         config_data['log_level'] = env_config['log_level']
 
-    # Remove None values from knox config
-    if 'knox' in config_data:
-        config_data['knox'] = {k: v for k, v in config_data['knox'].items() if v is not None}
-        if not config_data['knox']:
-            del config_data['knox']
+    # Remove None values from configs
+    for section in ['knox', 'cdp', 'cdp_rest']:
+        if section in config_data:
+            config_data[section] = {k: v for k, v in config_data[section].items() if v is not None}
+            if not config_data[section]:
+                del config_data[section]
 
     return Config(**config_data)
 

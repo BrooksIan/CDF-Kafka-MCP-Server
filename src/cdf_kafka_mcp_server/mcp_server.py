@@ -86,7 +86,13 @@ class CDFKafkaMCPServer:
                     verify_ssl=getattr(self.config.kafka, 'verify_ssl', False),
                     token=getattr(self.config.knox, 'token', None),
                     auth_method=getattr(self.config.kafka, 'auth_method', None),
-                    custom_endpoints=custom_endpoints
+                    custom_endpoints=custom_endpoints,
+                    kafka_connect_endpoint=getattr(self.config.cdp_rest, 'kafka_connect_endpoint', None) if hasattr(self.config, 'cdp_rest') else None,
+                    kafka_rest_endpoint=getattr(self.config.cdp_rest, 'kafka_rest_endpoint', None) if hasattr(self.config, 'cdp_rest') else None,
+                    kafka_topics_endpoint=getattr(self.config.cdp_rest, 'kafka_topics_endpoint', None) if hasattr(self.config, 'cdp_rest') else None,
+                    smm_api_endpoint=getattr(self.config.cdp_rest, 'smm_api_endpoint', None) if hasattr(self.config, 'cdp_rest') else None,
+                    admin_api_endpoint=getattr(self.config.cdp_rest, 'admin_api_endpoint', None) if hasattr(self.config, 'cdp_rest') else None,
+                    cdp_api_endpoint=getattr(self.config.cdp_rest, 'cdp_api_endpoint', None) if hasattr(self.config, 'cdp_rest') else None
                 )
                 self.cdp_kafka_client = CDPKafkaClient(self.config)
                 self.logger.info("CDP REST client initialized successfully")
@@ -799,21 +805,34 @@ class CDFKafkaMCPServer:
     # Tool Handlers
 
     async def _handle_list_topics(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
-        """Handle list_topics tool."""
-        # Try CDP REST client first
+        """Handle list_topics tool - Primary: Kafka Connect API for Cloudera AI Agent Studio."""
+        # Try Kafka Connect API first (primary for Cloudera AI Agent Studio)
         cdp_rest_client = self._get_cdp_rest_client()
         if cdp_rest_client:
             try:
-                topics = cdp_rest_client.get_topics()
+                topics = cdp_rest_client.get_connect_topics()
                 if isinstance(topics, list):
                     topic_names = [topic.get('name', topic) if isinstance(topic, dict) else str(topic) for topic in topics]
                 elif isinstance(topics, dict) and 'topics' in topics:
                     topic_names = [topic.get('name', topic) if isinstance(topic, dict) else str(topic) for topic in topics['topics']]
                 else:
                     topic_names = []
-                return {"topics": topic_names, "count": len(topic_names), "method": "cdp_rest_api"}
+                return {"topics": topic_names, "count": len(topic_names), "method": "kafka_connect_api"}
             except Exception as e:
-                self.logger.warning(f"CDP REST client list_topics failed: {e}")
+                self.logger.warning(f"Kafka Connect API list_topics failed: {e}")
+                
+                # Fallback to CDP REST API
+                try:
+                    topics = cdp_rest_client.get_topics()
+                    if isinstance(topics, list):
+                        topic_names = [topic.get('name', topic) if isinstance(topic, dict) else str(topic) for topic in topics]
+                    elif isinstance(topics, dict) and 'topics' in topics:
+                        topic_names = [topic.get('name', topic) if isinstance(topic, dict) else str(topic) for topic in topics['topics']]
+                    else:
+                        topic_names = []
+                    return {"topics": topic_names, "count": len(topic_names), "method": "cdp_rest_api"}
+                except Exception as e2:
+                    self.logger.warning(f"CDP REST client list_topics failed: {e2}")
         
         # Fallback to Kafka client
         if self.kafka_client:
@@ -826,29 +845,44 @@ class CDFKafkaMCPServer:
         return {"topics": [], "count": 0, "method": "none", "error": "No available client"}
 
     async def _handle_create_topic(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
-        """Handle create_topic tool."""
+        """Handle create_topic tool - Primary: Kafka Connect API for Cloudera AI Agent Studio."""
         name = arguments["name"]
         partitions = arguments.get("partitions", 1)
         replication_factor = arguments.get("replication_factor", 1)
         config = arguments.get("config", {})
         method = arguments.get("method", "auto")
 
-        # Try CDP REST client first
+        # Try Kafka Connect API first (primary for Cloudera AI Agent Studio)
         cdp_rest_client = self._get_cdp_rest_client()
         if cdp_rest_client:
             try:
-                result = cdp_rest_client.create_topic(name, partitions, replication_factor, config)
+                result = cdp_rest_client.create_topic_via_connect(name, partitions, replication_factor, config)
                 return {
-                    "message": f"Topic '{name}' created successfully using CDP REST API",
+                    "message": f"Topic '{name}' created successfully using Kafka Connect API",
                     "topic": name,
                     "partitions": partitions,
                     "replication_factor": replication_factor,
-                    "method": "cdp_rest_api",
+                    "method": "kafka_connect_api",
                     "config": config,
                     "result": result
                 }
             except Exception as e:
-                self.logger.warning(f"CDP REST client create_topic failed: {e}")
+                self.logger.warning(f"Kafka Connect API create_topic failed: {e}")
+                
+                # Fallback to CDP REST API
+                try:
+                    result = cdp_rest_client.create_topic(name, partitions, replication_factor, config)
+                    return {
+                        "message": f"Topic '{name}' created successfully using CDP REST API",
+                        "topic": name,
+                        "partitions": partitions,
+                        "replication_factor": replication_factor,
+                        "method": "cdp_rest_api",
+                        "config": config,
+                        "result": result
+                    }
+                except Exception as e2:
+                    self.logger.warning(f"CDP REST client create_topic failed: {e2}")
         
         # Fallback to Kafka client
         if self.kafka_client:
@@ -1077,33 +1111,53 @@ class CDFKafkaMCPServer:
         }
 
     async def _handle_produce_message(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
-        """Handle produce_message tool."""
+        """Handle produce_message tool - Primary: Kafka Connect API for Cloudera AI Agent Studio."""
         topic = arguments["topic"]
         key = arguments.get("key")
         value = arguments["value"]
         headers = arguments.get("headers")
         method = arguments.get("method", "auto")
 
-        # Try CDP REST client first
+        # Try Kafka Connect API first (primary for Cloudera AI Agent Studio)
         cdp_rest_client = self._get_cdp_rest_client()
         if cdp_rest_client:
             try:
-                result = cdp_rest_client.produce_message(
+                result = cdp_rest_client.produce_message_via_connect(
                     topic_name=topic,
                     message=value,
-                    key=key
+                    key=key,
+                    headers=headers
                 )
                 return {
                     "topic": topic,
                     "key": key,
                     "value": value,
                     "headers": headers,
-                    "method": "cdp_rest_api",
-                    "message": "Message produced successfully using CDP REST API",
+                    "method": "kafka_connect_api",
+                    "message": "Message produced successfully using Kafka Connect API",
                     "result": result
                 }
             except Exception as e:
-                self.logger.warning(f"CDP REST client produce_message failed: {e}")
+                self.logger.warning(f"Kafka Connect API produce_message failed: {e}")
+                
+                # Fallback to CDP REST API
+                try:
+                    result = cdp_rest_client.produce_message(
+                        topic_name=topic,
+                        message=value,
+                        key=key
+                    )
+                    return {
+                        "topic": topic,
+                        "key": key,
+                        "value": value,
+                        "headers": headers,
+                        "method": "cdp_rest_api",
+                        "message": "Message produced successfully using CDP REST API",
+                        "result": result
+                    }
+                except Exception as e2:
+                    self.logger.warning(f"CDP REST client produce_message failed: {e2}")
 
         # Fallback to Kafka client
         if self.kafka_client:
@@ -1791,18 +1845,30 @@ class CDFKafkaMCPServer:
         }
     
     async def _handle_get_cdp_clusters(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
-        """Handle get_cdp_clusters tool."""
+        """Handle get_cdp_clusters tool - Primary: Kafka Connect API for Cloudera AI Agent Studio."""
         cdp_rest_client = self._get_cdp_rest_client()
         if cdp_rest_client:
             try:
-                clusters = cdp_rest_client.get_clusters()
+                # Try Kafka Connect API first (primary for Cloudera AI Agent Studio)
+                clusters = cdp_rest_client.get_connect_clusters()
                 return {
                     "clusters": clusters,
                     "count": len(clusters) if isinstance(clusters, list) else 0,
-                    "method": "cdp_rest_api"
+                    "method": "kafka_connect_api"
                 }
             except Exception as e:
-                self.logger.warning(f"CDP REST client get_clusters failed: {e}")
+                self.logger.warning(f"Kafka Connect API get_clusters failed: {e}")
+                
+                # Fallback to CDP REST API
+                try:
+                    clusters = cdp_rest_client.get_clusters()
+                    return {
+                        "clusters": clusters,
+                        "count": len(clusters) if isinstance(clusters, list) else 0,
+                        "method": "cdp_rest_api"
+                    }
+                except Exception as e2:
+                    self.logger.warning(f"CDP REST client get_clusters failed: {e2}")
         
         return {
             "clusters": [],

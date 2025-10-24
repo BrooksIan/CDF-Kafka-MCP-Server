@@ -20,7 +20,13 @@ class CDPRestClient:
     def __init__(self, base_url: str, username: str, password: str, 
                  cluster_id: str = None, verify_ssl: bool = False, 
                  token: str = None, auth_method: str = None, 
-                 custom_endpoints: Dict[str, str] = None):
+                 custom_endpoints: Dict[str, str] = None,
+                 kafka_connect_endpoint: str = None,
+                 kafka_rest_endpoint: str = None,
+                 kafka_topics_endpoint: str = None,
+                 smm_api_endpoint: str = None,
+                 admin_api_endpoint: str = None,
+                 cdp_api_endpoint: str = None):
         """
         Initialize CDP REST API client.
         
@@ -41,6 +47,14 @@ class CDPRestClient:
         self.verify_ssl = verify_ssl
         self.session = requests.Session()
         
+        # Store individual endpoint configurations
+        self.kafka_connect_endpoint = kafka_connect_endpoint
+        self.kafka_rest_endpoint = kafka_rest_endpoint
+        self.kafka_topics_endpoint = kafka_topics_endpoint
+        self.smm_api_endpoint = smm_api_endpoint
+        self.admin_api_endpoint = admin_api_endpoint
+        self.cdp_api_endpoint = cdp_api_endpoint
+        
         # Initialize authentication
         self.authenticator = self._setup_authentication(token, auth_method)
         
@@ -48,12 +62,14 @@ class CDPRestClient:
         if custom_endpoints:
             self.endpoints = custom_endpoints
         else:
+            # Build endpoints from individual endpoint configurations or use defaults
             self.endpoints = {
-                'kafka_rest': f"{self.base_url}/irb-kakfa-only/cdp-proxy/kafka-rest",
-                'kafka_connect': f"{self.base_url}/irb-kakfa-only/cdp-proxy-token/kafka-connect",
-                'kafka_topics': f"{self.base_url}/irb-kakfa-only/cdp-proxy/kafka-topics",
-                'smm_api': f"{self.base_url}/irb-kakfa-only/cdp-proxy/smm-api",
-                'cdp_api': f"{self.base_url}/irb-kakfa-only/cdp-proxy-api"
+                'kafka_connect': getattr(self, 'kafka_connect_endpoint', None) or f"{self.base_url}/kafka-connect",
+                'kafka_rest': getattr(self, 'kafka_rest_endpoint', None) or f"{self.base_url}/kafka-rest",
+                'kafka_topics': getattr(self, 'kafka_topics_endpoint', None) or f"{self.base_url}/kafka-topics",
+                'smm_api': getattr(self, 'smm_api_endpoint', None) or f"{self.base_url}/smm-api",
+                'admin_api': getattr(self, 'admin_api_endpoint', None) or f"{self.base_url}/admin",
+                'cdp_api': getattr(self, 'cdp_api_endpoint', None) or f"{self.base_url}/cdp-proxy-api"
             }
         
         logger.info(f"CDP REST client initialized for {self.base_url}")
@@ -573,4 +589,157 @@ class CDPRestClient:
                 "cluster_id": self.cluster_id,
                 "available": False,
                 "error": str(e)
+            }
+    
+    # Kafka Connect API Methods for Cloudera AI Agent Studio Integration
+    
+    def get_connect_clusters(self) -> List[Dict[str, Any]]:
+        """Get Kafka Connect clusters using the primary endpoint."""
+        try:
+            response = self._make_request('GET', f"{self.endpoints['kafka_connect']}/")
+            if response.status_code == 200:
+                data = response.json()
+                if isinstance(data, list):
+                    return data
+                elif isinstance(data, dict) and 'clusters' in data:
+                    return data['clusters']
+                else:
+                    return [data] if data else []
+            return []
+        except Exception as e:
+            logger.error(f"Failed to get Connect clusters: {e}")
+            return []
+    
+    def get_connect_topics(self) -> List[Dict[str, Any]]:
+        """Get topics via Kafka Connect API."""
+        try:
+            # Try to get topics through Connect API
+            response = self._make_request('GET', f"{self.endpoints['kafka_connect']}/topics")
+            if response.status_code == 200:
+                data = response.json()
+                if isinstance(data, list):
+                    return data
+                elif isinstance(data, dict) and 'topics' in data:
+                    return data['topics']
+                else:
+                    return [data] if data else []
+            return []
+        except Exception as e:
+            logger.error(f"Failed to get topics via Connect API: {e}")
+            return []
+    
+    def create_topic_via_connect(self, name: str, partitions: int = 1, replication_factor: int = 1, config: Dict[str, str] = None) -> Dict[str, Any]:
+        """Create topic via Kafka Connect API."""
+        try:
+            topic_config = {
+                "name": name,
+                "partitions": partitions,
+                "replication_factor": replication_factor,
+                "config": config or {}
+            }
+            
+            response = self._make_request('POST', f"{self.endpoints['kafka_connect']}/topics", 
+                                        json=topic_config)
+            if response.status_code in [200, 201]:
+                return {
+                    "message": f"Topic '{name}' created successfully via Connect API",
+                    "topic": name,
+                    "partitions": partitions,
+                    "replication_factor": replication_factor,
+                    "config": config,
+                    "method": "kafka_connect_api"
+                }
+            else:
+                return {
+                    "error": f"Failed to create topic: {response.status_code} - {response.text}",
+                    "topic": name,
+                    "method": "kafka_connect_api"
+                }
+        except Exception as e:
+            logger.error(f"Failed to create topic via Connect API: {e}")
+            return {
+                "error": str(e),
+                "topic": name,
+                "method": "kafka_connect_api"
+            }
+    
+    def produce_message_via_connect(self, topic_name: str, message: str, key: str = None, headers: Dict[str, str] = None) -> Dict[str, Any]:
+        """Produce message via Kafka Connect API."""
+        try:
+            message_data = {
+                "topic": topic_name,
+                "value": message,
+                "key": key,
+                "headers": headers or {}
+            }
+            
+            response = self._make_request('POST', f"{self.endpoints['kafka_connect']}/topics/{topic_name}/messages", 
+                                        json=message_data)
+            if response.status_code in [200, 201]:
+                return {
+                    "message": "Message produced successfully via Connect API",
+                    "topic": topic_name,
+                    "method": "kafka_connect_api"
+                }
+            else:
+                return {
+                    "error": f"Failed to produce message: {response.status_code} - {response.text}",
+                    "topic": topic_name,
+                    "method": "kafka_connect_api"
+                }
+        except Exception as e:
+            logger.error(f"Failed to produce message via Connect API: {e}")
+            return {
+                "error": str(e),
+                "topic": topic_name,
+                "method": "kafka_connect_api"
+            }
+    
+    def get_topic_info_via_connect(self, topic_name: str) -> Dict[str, Any]:
+        """Get topic information via Kafka Connect API."""
+        try:
+            response = self._make_request('GET', f"{self.endpoints['kafka_connect']}/topics/{topic_name}")
+            if response.status_code == 200:
+                data = response.json()
+                return {
+                    "name": topic_name,
+                    "info": data,
+                    "method": "kafka_connect_api"
+                }
+            else:
+                return {
+                    "name": topic_name,
+                    "error": f"Topic not found: {response.status_code}",
+                    "method": "kafka_connect_api"
+                }
+        except Exception as e:
+            logger.error(f"Failed to get topic info via Connect API: {e}")
+            return {
+                "name": topic_name,
+                "error": str(e),
+                "method": "kafka_connect_api"
+            }
+    
+    def delete_topic_via_connect(self, topic_name: str) -> Dict[str, Any]:
+        """Delete topic via Kafka Connect API."""
+        try:
+            response = self._make_request('DELETE', f"{self.endpoints['kafka_connect']}/topics/{topic_name}")
+            if response.status_code in [200, 204]:
+                return {
+                    "message": f"Topic '{topic_name}' deleted successfully via Connect API",
+                    "topic": topic_name,
+                    "method": "kafka_connect_api"
+                }
+            else:
+                return {
+                    "error": f"Failed to delete topic: {response.status_code} - {response.text}",
+                    "topic": topic_name,
+                    "method": "kafka_connect_api"
+                }
+        except Exception as e:
+            logger.error(f"Failed to delete topic via Connect API: {e}")
+            return {
+                "error": str(e),
+                "topic": topic_name,
+                "method": "kafka_connect_api"
             }
