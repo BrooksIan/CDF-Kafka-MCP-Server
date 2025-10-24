@@ -779,6 +779,10 @@ class CDFKafkaMCPServer:
                 result = await self._handle_discover_auth_endpoints(arguments)
             elif tool_name == "refresh_authentication":
                 result = await self._handle_refresh_authentication(arguments)
+            elif tool_name == "get_topic_info":
+                result = await self._handle_describe_topic(arguments)
+            elif tool_name == "get_cdp_clusters":
+                result = await self._handle_get_cdp_clusters(arguments)
             else:
                 raise ValueError(f"Unknown tool: {tool_name}")
 
@@ -829,16 +833,47 @@ class CDFKafkaMCPServer:
         config = arguments.get("config", {})
         method = arguments.get("method", "auto")
 
-        # Create topic using the enhanced method
-        self.kafka_client.create_topic(name, partitions, replication_factor, config)
+        # Try CDP REST client first
+        cdp_rest_client = self._get_cdp_rest_client()
+        if cdp_rest_client:
+            try:
+                result = cdp_rest_client.create_topic(name, partitions, replication_factor, config)
+                return {
+                    "message": f"Topic '{name}' created successfully using CDP REST API",
+                    "topic": name,
+                    "partitions": partitions,
+                    "replication_factor": replication_factor,
+                    "method": "cdp_rest_api",
+                    "config": config,
+                    "result": result
+                }
+            except Exception as e:
+                self.logger.warning(f"CDP REST client create_topic failed: {e}")
         
+        # Fallback to Kafka client
+        if self.kafka_client:
+            try:
+                self.kafka_client.create_topic(name, partitions, replication_factor, config)
+                return {
+                    "message": f"Topic '{name}' created successfully using Kafka client",
+                    "topic": name,
+                    "partitions": partitions,
+                    "replication_factor": replication_factor,
+                    "method": "kafka_client",
+                    "config": config
+                }
+            except Exception as e:
+                self.logger.warning(f"Kafka client create_topic failed: {e}")
+        
+        # If no clients available, return a placeholder response
         return {
-            "message": f"Topic '{name}' created successfully using {method} method",
+            "message": f"Topic '{name}' creation attempted (no available client)",
             "topic": name,
             "partitions": partitions,
             "replication_factor": replication_factor,
-            "method": method,
-            "config": config
+            "method": "none",
+            "config": config,
+            "error": "No available client for topic creation"
         }
 
     async def _handle_describe_topic(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
@@ -1102,29 +1137,61 @@ class CDFKafkaMCPServer:
 
     async def _handle_consume_messages(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """Handle consume_messages tool."""
-        request = ConsumeMessageRequest(
-            topic=arguments["topic"],
-            partition=arguments.get("partition"),
-            offset=arguments.get("offset", 0),
-            max_count=arguments.get("max_count", 10),
-            timeout=arguments.get("timeout", 5)
-        )
+        topic = arguments["topic"]
+        partition = arguments.get("partition")
+        offset = arguments.get("offset", 0)
+        max_count = arguments.get("max_count", 10)
+        timeout = arguments.get("timeout", 5)
 
-        messages = self.kafka_client.consume_messages(request)
-        return {
-            "messages": [
-                {
-                    "topic": msg.topic,
-                    "partition": msg.partition,
-                    "offset": msg.offset,
-                    "key": msg.key,
-                    "value": msg.value,
-                    "headers": msg.headers,
-                    "timestamp": msg.timestamp.isoformat()
+        # Try CDP REST client first
+        cdp_rest_client = self._get_cdp_rest_client()
+        if cdp_rest_client:
+            try:
+                # For now, return a placeholder since we don't have consume endpoint
+                return {
+                    "messages": [],
+                    "count": 0,
+                    "method": "cdp_rest_api",
+                    "message": "Message consumption not available via CDP REST API"
                 }
-                for msg in messages
-            ],
-            "count": len(messages)
+            except Exception as e:
+                self.logger.warning(f"CDP REST client consume_messages failed: {e}")
+        
+        # Fallback to Kafka client
+        if self.kafka_client:
+            try:
+                request = ConsumeMessageRequest(
+                    topic=topic,
+                    partition=partition,
+                    offset=offset,
+                    max_count=max_count,
+                    timeout=timeout
+                )
+                messages = self.kafka_client.consume_messages(request)
+                return {
+                    "messages": [
+                        {
+                            "topic": msg.topic,
+                            "partition": msg.partition,
+                            "offset": msg.offset,
+                            "key": msg.key,
+                            "value": msg.value,
+                            "headers": msg.headers,
+                            "timestamp": msg.timestamp.isoformat()
+                        }
+                        for msg in messages
+                    ],
+                    "count": len(messages),
+                    "method": "kafka_client"
+                }
+            except Exception as e:
+                self.logger.warning(f"Kafka client consume_messages failed: {e}")
+        
+        return {
+            "messages": [],
+            "count": 0,
+            "method": "none",
+            "error": "No available client for message consumption"
         }
 
     async def _handle_get_topic_offsets(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
@@ -1279,9 +1346,46 @@ class CDFKafkaMCPServer:
 
     async def _handle_get_connector_status(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """Handle get_connector_status tool."""
-        name = arguments["name"]
-        status = self.kafka_client.get_connector_status(name)
-        return {"connector": name, "status": status}
+        name = arguments.get("name")
+        if not name:
+            return {
+                "error": "Connector name is required",
+                "connector": None,
+                "status": None
+            }
+        
+        # Try CDP REST client first
+        cdp_rest_client = self._get_cdp_rest_client()
+        if cdp_rest_client:
+            try:
+                # For now, return a placeholder since we don't have connector status endpoint
+                return {
+                    "connector": name,
+                    "status": "unknown",
+                    "method": "cdp_rest_api",
+                    "message": "Connector status not available via CDP REST API"
+                }
+            except Exception as e:
+                self.logger.warning(f"CDP REST client get_connector_status failed: {e}")
+        
+        # Fallback to Kafka client
+        if self.kafka_client:
+            try:
+                status = self.kafka_client.get_connector_status(name)
+                return {
+                    "connector": name,
+                    "status": status,
+                    "method": "kafka_client"
+                }
+            except Exception as e:
+                self.logger.warning(f"Kafka client get_connector_status failed: {e}")
+        
+        return {
+            "connector": name,
+            "status": "unknown",
+            "method": "none",
+            "error": "No available client for connector status"
+        }
 
     async def _handle_get_connector_config(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """Handle get_connector_config tool."""
@@ -1598,7 +1702,13 @@ class CDFKafkaMCPServer:
         if not self.health_monitor:
             return {"error": "Health monitor not available"}
 
-        check_name = arguments["check_name"]
+        check_name = arguments.get("check_name")
+        if not check_name:
+            return {
+                "error": "Health check name is required",
+                "check_name": None,
+                "message": "Please specify a check_name parameter"
+            }
         try:
             if check_name == "kafka":
                 result = self.health_monitor.check_kafka_health()
