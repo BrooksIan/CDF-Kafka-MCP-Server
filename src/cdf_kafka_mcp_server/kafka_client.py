@@ -211,6 +211,89 @@ class KafkaClient:
             # Ultimate fallback: return empty list
             return []
 
+    def _create_topic_via_knox(self, topic_name: str, partitions: int = 1, replication_factor: int = 1, 
+                              config: Optional[Dict[str, str]] = None) -> None:
+        """Create topic using Knox token approach."""
+        try:
+            import requests
+            
+            # Get Knox token
+            if not self.knox_client:
+                raise Exception("Knox client not available")
+            
+            token = self.knox_client.get_token()
+            
+            # Try to use Knox Gateway for topic creation
+            # First, try to get the Kafka admin endpoint through Knox
+            knox_gateway = self.config.knox.gateway
+            if not knox_gateway:
+                raise Exception("Knox gateway URL not configured")
+            
+            # Try different Knox endpoints for topic creation
+            endpoints_to_try = [
+                f"{knox_gateway}/kafka/admin/topics",
+                f"{knox_gateway}/kafka/topics",
+                f"{knox_gateway}/admin/topics",
+                f"{knox_gateway}/topics"
+            ]
+            
+            headers = {
+                "Authorization": f"Bearer {token}",
+                "Content-Type": "application/json"
+            }
+            
+            topic_data = {
+                "name": topic_name,
+                "partitions": partitions,
+                "replication_factor": replication_factor
+            }
+            
+            if config:
+                topic_data["config"] = config
+            
+            for endpoint in endpoints_to_try:
+                try:
+                    print(f"Trying Knox endpoint: {endpoint}")
+                    response = requests.post(endpoint, json=topic_data, headers=headers, timeout=30)
+                    
+                    if response.status_code in [200, 201, 202]:
+                        print(f"✅ Topic created via Knox endpoint: {endpoint}")
+                        return
+                    elif response.status_code == 404:
+                        print(f"Endpoint not found: {endpoint}")
+                        continue
+                    else:
+                        print(f"Endpoint {endpoint} returned {response.status_code}: {response.text}")
+                        continue
+                        
+                except Exception as e:
+                    print(f"Error with endpoint {endpoint}: {e}")
+                    continue
+            
+            # If no Knox endpoint worked, try using the admin client with Knox token
+            if self.admin_client:
+                try:
+                    from kafka.admin import NewTopic
+                    new_topic = NewTopic(
+                        name=topic_name,
+                        num_partitions=partitions,
+                        replication_factor=replication_factor,
+                        topic_configs=config or {}
+                    )
+                    
+                    result = self.admin_client.create_topics([new_topic], validate_only=False)
+                    for topic, future in result.items():
+                        future.result(timeout=30)
+                    print(f"✅ Topic created via admin client with Knox token")
+                    return
+                except Exception as e:
+                    print(f"Admin client with Knox token failed: {e}")
+            
+            raise Exception("All Knox approaches failed")
+            
+        except Exception as e:
+            raise Exception(f"Failed to create topic {topic_name} via Knox: {e}")
+
     def _create_topic_via_connect(self, topic_name: str) -> None:
         """Create topic using Kafka Connect API as fallback."""
         try:
@@ -280,11 +363,15 @@ class KafkaClient:
     def create_topic(self, name: str, partitions: int = 1, replication_factor: int = 1,
                     config: Optional[Dict[str, str]] = None) -> None:
         """Create a new topic."""
-        # Always use Connect API for CDP Cloud
+        # Try Knox token approach first, then fall back to Connect API
         try:
-            self._create_topic_via_connect(name)
-        except Exception as e:
-            raise Exception(f"Failed to create topic {name} via Connect API: {e}")
+            self._create_topic_via_knox(name, partitions, replication_factor, config)
+        except Exception as knox_error:
+            print(f"Knox approach failed: {knox_error}")
+            try:
+                self._create_topic_via_connect(name)
+            except Exception as connect_error:
+                raise Exception(f"Failed to create topic {name}. Knox error: {knox_error}. Connect error: {connect_error}")
 
     def _describe_topic_via_fallback(self, name: str) -> TopicInfo:
         """Fallback method to describe topic when admin_client is not available."""
